@@ -25,8 +25,10 @@
 				align_enum align;
 				char     *dataPtr;
 				int8_t   blockIdx = -1;
-				void* fieldChain;   
-			} DataField;
+				void* fieldChain;
+				void* labelChain;
+				char type;  // F - field; L - label   
+			} TextElement;
 
     		typedef struct{
 				uint8_t   x;
@@ -35,23 +37,29 @@
 				uint16_t  h;
 				uint16_t  bgColor;
 				int8_t   screenIdx = -1;
-				DataField* fieldChain;
+				TextElement* fieldChain;
+				TextElement* labelChain;
 			} DisplayBlock;
 
     		int8_t blockArrIdx = -1;   
-    		int8_t dataFieldArrIdx = -1;  
+    		int8_t textElementArrIdx = -1;  
   
     		Adafruit_ILI9341 *_tft;
     		DisplayBlock displayBlockArr[MAX_DISPLAY_BLOCKS];
-    		DataField   dataFieldArr[MAX_DATAFIELDS];
+    		TextElement   textElementArr[MAX_DATAFIELDS];
     		int8_t currentScreenIdx = 0;   
+			
+			void defineTextElement(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t  _h, uint16_t _fgColor, const GFXfont *_font, align_enum _align, char *_dataPtr, int8_t _blockIdx, char type);
 
 		public:
 			WsDisplay(Adafruit_ILI9341 *tft);
 			uint8_t defineBlock(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t _h, uint16_t _bgColor, int8_t _screenIdx);
-			uint8_t defineDataField(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t  _h, uint16_t _fgColor, const GFXfont *_font, align_enum _align, char *_dataPtr, int8_t _blockIdx);
-			void showData(WsDisplay::DataField* dataField, bool fill);
-			void showData(int8_t fieldIdx, bool fill);
+			uint8_t defineField(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t  _h, uint16_t _fgColor, const GFXfont *_font, align_enum _align, char *_dataPtr, int8_t _blockIdx);
+			uint8_t defineLabel(uint8_t _x, uint16_t _y, uint16_t _fgColor, const GFXfont *_font,  char *_dataPtr, int8_t _blockIdx);
+
+			void showField(int8_t fieldIdx, bool fill);
+			void showField(WsDisplay::TextElement* textElement, bool fill);
+			void showLabel(TextElement* textElement);
 			void showBlock(int8_t blockIdx);
 			void showBlock(int8_t blockIdx, bool fill);
 			void showScreen();
