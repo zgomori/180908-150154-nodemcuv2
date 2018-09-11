@@ -204,6 +204,9 @@ void setup() {
     wsDisplay.defineBlock(0,   210,  120,  110,   ILI9341_ORANGE, 0);
     wsDisplay.defineBlock(120, 210,  120,  110,   ILI9341_OLIVE, 0);
 
+wsDisplay.defineLabel(5,15,0,&FreeSans12pt7b, "Sensor1",1);
+wsDisplay.defineLabel(5,15,0,&FreeSans12pt7b, "Sensor2",2);
+
     wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(0), 1);
 //    wsDisplay.defineDataField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
     wsDisplay.defineField(10, 65, 100,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
