@@ -50,16 +50,15 @@
     		int8_t currentScreenIdx = 0;   
 			
 			void defineTextElement(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t  _h, uint16_t _fgColor, const GFXfont *_font, align_enum _align, char *_dataPtr, int8_t _blockIdx, char type);
+			void showField(WsDisplay::TextElement* textElement, bool fill);
+			void showLabel(TextElement* textElement);
 
 		public:
 			WsDisplay(Adafruit_ILI9341 *tft);
 			uint8_t defineBlock(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t _h, uint16_t _bgColor, int8_t _screenIdx);
 			uint8_t defineField(uint8_t _x, uint16_t _y, uint8_t _w, uint16_t  _h, uint16_t _fgColor, const GFXfont *_font, align_enum _align, char *_dataPtr, int8_t _blockIdx);
 			uint8_t defineLabel(uint8_t _x, uint16_t _y, uint16_t _fgColor, const GFXfont *_font,  char *_dataPtr, int8_t _blockIdx);
-
 			void showField(int8_t fieldIdx, bool fill);
-			void showField(WsDisplay::TextElement* textElement, bool fill);
-			void showLabel(TextElement* textElement);
 			void showBlock(int8_t blockIdx);
 			void showBlock(int8_t blockIdx, bool fill);
 			void showScreen();
