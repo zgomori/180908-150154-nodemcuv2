@@ -4,13 +4,13 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
+
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
 
-#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
-//#include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/MonoSpaced24.h>
 
 #include <Adafruit_Sensor.h>
@@ -204,8 +204,8 @@ void setup() {
     wsDisplay.defineBlock(0,   210,  120,  110,   ILI9341_ORANGE, 0);
     wsDisplay.defineBlock(120, 210,  120,  110,   ILI9341_OLIVE, 0);
 
-wsDisplay.defineLabel(5,15,0,&FreeSans12pt7b, "Sensor1",1);
-wsDisplay.defineLabel(5,15,0,&FreeSans12pt7b, "Sensor2",2);
+    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor1",1);
+    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor2",2);
 
     wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(0), 1);
 //    wsDisplay.defineDataField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
