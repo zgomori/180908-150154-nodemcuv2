@@ -214,7 +214,97 @@ void setup() {
     wsDisplay.defineField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(1), 2);
 
     wsDisplay.showScreen();
+
+/******************************************************************/
+    char thReadBuffer[255];
+    getThingSpeak(thReadBuffer);
+
+    char* jsonKey="\"field1\"";
+    char dst[20];
+    getJsonValue(thReadBuffer, "\"field1\"",  dst);
+    Serial.println(dst);  
+    getJsonValue(thReadBuffer, "\"field2\"",  dst);
+    Serial.println(dst);  
+    getJsonValue(thReadBuffer, "\"field3\"",  dst);
+    Serial.println(dst);          
+    getJsonValue(thReadBuffer, "\"field4\"",  dst);
+    Serial.println(dst);          
+    getJsonValue(thReadBuffer, "\"field5\"",  dst);
+    Serial.println(dst);          
+
+/*
+    char* field1Ptr = strstr(thReadBuffer,"\"field1\"");
+    if (field1Ptr){
+      Serial.println(field1Ptr);
+    }
+
+    uint8_t idx[9];
+    uint8_t len[9];
+    uint8_t cnt = 0;
+    uint8_t lenCnt = 0;
+    boolean startSrting = false;
+
+    uint8_t i = 0;
+    while(field1Ptr[i] != 0){
+      if(field1Ptr[i] == '"'){
+        if(!startSrting){
+          startSrting = true;
+          idx[cnt] = i+1;
+          lenCnt = 0;
+        }
+        else{
+          startSrting = false;
+          len[cnt] = lenCnt-1;
+          cnt++;
+        } 
+      }
+      if(startSrting){
+        lenCnt++;
+      }
+      i++;
+    }
+
+    for(uint8_t i = 0; i < 9; i++){
+      Serial.print(idx[i]);
+      Serial.print(" - ");
+      Serial.println(len[i]);
+    }  
+*/    
+/*********************************************************************/    
 }
+
+void getJsonValue(char jsonString[], char key[], char* dst){
+  long tt = micros();
+  char* src = strstr(jsonString, key);
+  dst[0] = 0;
+  if(src){
+    src = src + strlen(key);
+    uint8_t i = 0;
+    uint8_t dstIdx = 0;
+    boolean beginStr = false;
+    while(src[i] != 0){
+      if((src[i] == '"')){
+        if (!beginStr){
+          beginStr = true;
+        }   
+        else{
+          break;
+        }
+      }
+      else{
+        if(beginStr){
+          dst[dstIdx] = src[i];
+          dstIdx++;
+        }
+      } 
+      i++;  
+    }
+    dst[dstIdx] = 0;
+  }
+  Serial.println(micros() - tt);
+}
+
+
 
 void loop() {
     newDataFromNode = -1;
@@ -341,6 +431,57 @@ void updateThingSpeak(uint8_t nodeID) {
     }
     Serial.println("===RESPONSE END===");
     */
+    client.stop();
+    Serial.println("===CLIENT STOP===");
+    
+  }
+  else{
+    Serial.println("Connection failed.");
+  }
+
+}
+
+void getThingSpeak(char* buff) {
+
+  if (client.connect(cfg.thingSpeakAddress, 80)) {
+
+    Serial.println("Wifi client connected to server.");
+    client.print(F("GET /channels/528401/feeds/last.json?api_key=JXWWMBZMQZNRMOJK HTTP/1.1\n"));
+    client.print(F("Host: api.thingspeak.com\n"));
+    client.print(F("Connection: close\n"));
+    client.print(F("\n\n"));
+ 
+    unsigned long clientTimeout = millis();
+    while (client.available() == 0) {
+      if (millis() - clientTimeout > 5000) {
+        Serial.println("Client Timeout !");
+        client.stop();
+        return;
+      }
+      //yield();
+      delay(10);    
+    }
+    Serial.println("===RESPONSE BEGIN===");
+    char c;
+    boolean startJson = false;
+    uint8_t buffIdx = 0;
+    while(client.available()){
+       c = client.read();
+       if (c == '{'){
+         startJson = true;
+       } 
+       if (startJson){
+         buff[buffIdx] = c;
+         buffIdx++;
+       }
+       if (c == '}'){
+         break;
+       }
+    }
+    buff[buffIdx] = 0;
+
+    Serial.println(buff);
+    Serial.println("===RESPONSE END===");
     client.stop();
     Serial.println("===CLIENT STOP===");
     
