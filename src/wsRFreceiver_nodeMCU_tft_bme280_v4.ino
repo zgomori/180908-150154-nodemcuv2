@@ -216,90 +216,37 @@ void setup() {
     wsDisplay.showScreen();
 
 /******************************************************************/
-    char thReadBuffer[255];
-    getThingSpeak(thReadBuffer);
+    char jsonResponse[255];
+    readThingSpeak(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
 
-    char* jsonKey="\"field1\"";
     char dst[20];
-    getJsonValue(thReadBuffer, "\"field1\"",  dst);
-    Serial.println(dst);  
-    getJsonValue(thReadBuffer, "\"field2\"",  dst);
-    Serial.println(dst);  
-    getJsonValue(thReadBuffer, "\"field3\"",  dst);
-    Serial.println(dst);          
-    getJsonValue(thReadBuffer, "\"field4\"",  dst);
-    Serial.println(dst);          
-    getJsonValue(thReadBuffer, "\"field5\"",  dst);
-    Serial.println(dst);          
-
-/*
-    char* field1Ptr = strstr(thReadBuffer,"\"field1\"");
-    if (field1Ptr){
-      Serial.println(field1Ptr);
-    }
-
-    uint8_t idx[9];
-    uint8_t len[9];
-    uint8_t cnt = 0;
-    uint8_t lenCnt = 0;
-    boolean startSrting = false;
-
-    uint8_t i = 0;
-    while(field1Ptr[i] != 0){
-      if(field1Ptr[i] == '"'){
-        if(!startSrting){
-          startSrting = true;
-          idx[cnt] = i+1;
-          lenCnt = 0;
-        }
-        else{
-          startSrting = false;
-          len[cnt] = lenCnt-1;
-          cnt++;
-        } 
+    for(uint8_t i=0; i < 5; i++){
+      int8_t fieldNo = cfg.tsNodeConfigArr[1].fieldMapping[i];
+      if (fieldNo != -1){
+        getJsonFieldValue(jsonResponse, fieldNo,  dst);
+        Serial.println(dst); 
       }
-      if(startSrting){
-        lenCnt++;
-      }
-      i++;
     }
-
-    for(uint8_t i = 0; i < 9; i++){
-      Serial.print(idx[i]);
-      Serial.print(" - ");
-      Serial.println(len[i]);
-    }  
-*/    
-/*********************************************************************/    
+    
+ 
 }
 
-void getJsonValue(char jsonString[], char key[], char* dst){
+void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst){
   long tt = micros();
-  char* src = strstr(jsonString, key);
+  char key[]="\"fieldX\"";
+  key[6] = '0' + fieldNo;
+  char* src = strstr(jsonString+45, key);
   dst[0] = 0;
   if(src){
-    src = src + strlen(key);
+    //  "fieldX":"
+    //            ^ this is src + 10
+    src = src + 10;
     uint8_t i = 0;
-    uint8_t dstIdx = 0;
-    boolean beginStr = false;
-    while(src[i] != 0){
-      if((src[i] == '"')){
-        if (!beginStr){
-          beginStr = true;
-        }   
-        else{
-          break;
-        }
-      }
-      else{
-        if(beginStr){
-          dst[dstIdx] = src[i];
-          dstIdx++;
-        }
-      } 
-      i++;  
+    while( (src[i] != 0) && (src[i] != '\"')) {
+       dst[i] = src[i];
+       i++;  
     }
-    dst[dstIdx] = 0;
+    dst[i] = 0;
   }
   Serial.println(micros() - tt);
 }
@@ -441,12 +388,17 @@ void updateThingSpeak(uint8_t nodeID) {
 
 }
 
-void getThingSpeak(char* buff) {
+void readThingSpeak(char* apiKey, char* channel, char* json) {
+  char getParam[80] =  "GET /channels/";
+  strcat(getParam, channel);
+  strcat(getParam, "/feeds/last.json?api_key=");
+  strcat(getParam, apiKey);
+  strcat(getParam, " HTTP/1.1\n");
 
   if (client.connect(cfg.thingSpeakAddress, 80)) {
-
-    Serial.println("Wifi client connected to server.");
-    client.print(F("GET /channels/528401/feeds/last.json?api_key=JXWWMBZMQZNRMOJK HTTP/1.1\n"));
+    Serial.println("readThingSpeak: Wifi client connected to server.");
+    Serial.println(getParam);
+    client.print(getParam);
     client.print(F("Host: api.thingspeak.com\n"));
     client.print(F("Connection: close\n"));
     client.print(F("\n\n"));
@@ -471,20 +423,17 @@ void getThingSpeak(char* buff) {
          startJson = true;
        } 
        if (startJson){
-         buff[buffIdx] = c;
+         json[buffIdx] = c;
          buffIdx++;
        }
        if (c == '}'){
          break;
        }
     }
-    buff[buffIdx] = 0;
+    json[buffIdx] = 0;
 
-    Serial.println(buff);
-    Serial.println("===RESPONSE END===");
+    Serial.println(json);
     client.stop();
-    Serial.println("===CLIENT STOP===");
-    
   }
   else{
     Serial.println("Connection failed.");
@@ -529,14 +478,33 @@ void printWifiStatus() {
 void readConfig(WsReceiverConfig &_cfg){  
   _cfg.radioNetworkAddress = 0xA0A0A0FFLL;
   _cfg.radioChannel = 101;
-  strcat(_cfg.wifiSsid, "wxIoT");
-  strcat(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
-  strcat(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
-  strcat(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
-  strcat(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
+  strcpy(_cfg.wifiSsid, "wxIoT");
+  strcpy(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
+  strcpy(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
+  strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
+  strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
   _cfg.sensorSet = 23;
   _cfg.sensorReadCycleMs = 60000L;
   _cfg.elevation = 126;
+
+  strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
+  strcpy(_cfg.tsNodeConfigArr[0].thingSpeakReadKey, "9ZTPTLMLNFU8VZU3");
+  strcpy(_cfg.tsNodeConfigArr[0].thingSpeakChannel, "340091");
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMP] = 1;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[0].nodeID = 6;
+  _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
+
+  strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
+  strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
+  strcpy(_cfg.tsNodeConfigArr[1].thingSpeakChannel, "528401");
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMP] = 1;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_AIRP] = 3;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MC] = 4;
+  _cfg.tsNodeConfigArr[1].nodeID = 6;
+  _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
+
 }
 
 void initRadioRx(WsReceiverConfig _cfg){
