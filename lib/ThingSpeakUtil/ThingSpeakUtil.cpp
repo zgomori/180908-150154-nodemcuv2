@@ -1,13 +1,15 @@
-#include "thingSpeakUtil.h"
+#include "ThingSpeakUtil.h"
 
 ThingSpeakUtil::ThingSpeakUtil(WiFiClient client, char* thingSpeakAddress){
 	this->client = client;
-	this->thingSpeakAddress = thingSpeakAddress
+	this->thingSpeakAddress = thingSpeakAddress;
 }
 
-void ThingSpeakUtil::updateThingSpeak(uint8_t nodeID, char* apiKey){
+void ThingSpeakUtil::update(char* apiKey, char* params){
+/*
 	char params[70] = "\0";
 	sensorDataCache.createThingSpeakParam(nodeID, params);
+*/
 	Serial.println(params); 
 
 	//  Serial.print("Connecting to ");
@@ -54,7 +56,7 @@ void ThingSpeakUtil::updateThingSpeak(uint8_t nodeID, char* apiKey){
 
 }
 
-void ThingSpeakUtil::readThingSpeak(char* apiKey, char* channel, char* json){
+void ThingSpeakUtil::get(char* apiKey, char* channel, char* json){
 	char getParam[80] =  "GET /channels/";
 	strcat(getParam, channel);
 	strcat(getParam, "/feeds/last.json?api_key=");

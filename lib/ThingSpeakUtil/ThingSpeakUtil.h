@@ -9,8 +9,8 @@
 			char* thingSpeakAddress;
 		public:
 			ThingSpeakUtil(WiFiClient client, char* thingSpeakAddress);
-			void updateThingSpeak(uint8_t nodeID);
-			void readThingSpeak(char* apiKey, char* channel, char* json);
+			void update(char* apiKey, char* params);
+			void get(char* apiKey, char* channel, char* json);
 	};
 
 
