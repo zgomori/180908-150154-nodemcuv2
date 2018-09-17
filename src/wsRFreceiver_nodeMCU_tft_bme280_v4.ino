@@ -4,13 +4,13 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
+
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
 
-#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
-//#include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/MonoSpaced24.h>
 
 #include <Adafruit_Sensor.h>
@@ -18,6 +18,8 @@
 
 #include "WS_library.h"
 #include "WsDisplay.h"
+#include "thingSpeakUtil.h"
+
 /*****************************************************************************************************************************************/
 
 #define NUMBER_OF_NODES 5
@@ -204,14 +206,54 @@ void setup() {
     wsDisplay.defineBlock(0,   210,  120,  110,   ILI9341_ORANGE, 0);
     wsDisplay.defineBlock(120, 210,  120,  110,   ILI9341_OLIVE, 0);
 
-    wsDisplay.defineDataField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(0), 1);
+    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor1",1);
+    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor2",2);
+
+    wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(0), 1);
 //    wsDisplay.defineDataField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
-    wsDisplay.defineDataField(10, 65, 100,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
-    wsDisplay.defineDataField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(1), 2);
-    wsDisplay.defineDataField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(1), 2);
+    wsDisplay.defineField(10, 65, 100,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
+    wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(1), 2);
+    wsDisplay.defineField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(1), 2);
 
     wsDisplay.showScreen();
+
+/******************************************************************/
+    char jsonResponse[255];
+    readThingSpeak(cfg.thingSpeakAddress, cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+
+    char dst[20];
+    for(uint8_t i=0; i < 5; i++){
+      int8_t fieldNo = cfg.tsNodeConfigArr[1].fieldMapping[i];
+      if (fieldNo != -1){
+        getJsonFieldValue(jsonResponse, fieldNo,  dst);
+        Serial.println(dst); 
+      }
+    }
+    
+ 
 }
+
+void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst){
+  long tt = micros();
+  char key[]="\"fieldX\"";
+  key[6] = '0' + fieldNo;
+  char* src = strstr(jsonString+45, key);
+  dst[0] = 0;
+  if(src){
+    //  "fieldX":"
+    //            ^ this is src + 10
+    src = src + 10;
+    uint8_t i = 0;
+    while( (src[i] != 0) && (src[i] != '\"')) {
+       dst[i] = src[i];
+       i++;  
+    }
+    dst[i] = 0;
+  }
+  Serial.println(micros() - tt);
+}
+
+
 
 void loop() {
     newDataFromNode = -1;
@@ -348,6 +390,59 @@ void updateThingSpeak(uint8_t nodeID) {
 
 }
 
+void readThingSpeak(char* thingSpeakAddress, char* apiKey, char* channel, char* json) {
+  char getParam[80] =  "GET /channels/";
+  strcat(getParam, channel);
+  strcat(getParam, "/feeds/last.json?api_key=");
+  strcat(getParam, apiKey);
+  strcat(getParam, " HTTP/1.1\n");
+
+  if (client.connect(thingSpeakAddress, 80)) {
+    Serial.println("readThingSpeak: Wifi client connected to server.");
+    Serial.println(getParam);
+    client.print(getParam);
+    client.print(F("Host: api.thingspeak.com\n"));
+    client.print(F("Connection: close\n"));
+    client.print(F("\n\n"));
+ 
+    unsigned long clientTimeout = millis();
+    while (client.available() == 0) {
+      if (millis() - clientTimeout > 5000) {
+        Serial.println("Client Timeout !");
+        client.stop();
+        return;
+      }
+      //yield();
+      delay(10);    
+    }
+    Serial.println("===RESPONSE BEGIN===");
+    char c;
+    boolean startJson = false;
+    uint8_t buffIdx = 0;
+    while(client.available()){
+       c = client.read();
+       if (c == '{'){
+         startJson = true;
+       } 
+       if (startJson){
+         json[buffIdx] = c;
+         buffIdx++;
+       }
+       if (c == '}'){
+         break;
+       }
+    }
+    json[buffIdx] = 0;
+
+    Serial.println(json);
+    client.stop();
+  }
+  else{
+    Serial.println("Connection failed.");
+  }
+
+}
+
 /*
 void tsParamAdd(char* value, char* dst, byte &sensorSet, const uint8_t &valueType, uint8_t &fieldCnt){
     if (bitRead(sensorSet,valueType)){
@@ -385,14 +480,33 @@ void printWifiStatus() {
 void readConfig(WsReceiverConfig &_cfg){  
   _cfg.radioNetworkAddress = 0xA0A0A0FFLL;
   _cfg.radioChannel = 101;
-  strcat(_cfg.wifiSsid, "wxIoT");
-  strcat(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
-  strcat(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
-  strcat(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
-  strcat(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
+  strcpy(_cfg.wifiSsid, "wxIoT");
+  strcpy(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
+  strcpy(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
+  strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
+  strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
   _cfg.sensorSet = 23;
   _cfg.sensorReadCycleMs = 60000L;
   _cfg.elevation = 126;
+
+  strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
+  strcpy(_cfg.tsNodeConfigArr[0].thingSpeakReadKey, "9ZTPTLMLNFU8VZU3");
+  strcpy(_cfg.tsNodeConfigArr[0].thingSpeakChannel, "340091");
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMP] = 1;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[0].nodeID = 6;
+  _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
+
+  strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
+  strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
+  strcpy(_cfg.tsNodeConfigArr[1].thingSpeakChannel, "528401");
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMP] = 1;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_AIRP] = 3;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MC] = 4;
+  _cfg.tsNodeConfigArr[1].nodeID = 6;
+  _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
+
 }
 
 void initRadioRx(WsReceiverConfig _cfg){
