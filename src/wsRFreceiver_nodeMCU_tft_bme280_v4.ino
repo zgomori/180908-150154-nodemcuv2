@@ -18,6 +18,8 @@
 
 #include "WS_library.h"
 #include "WsDisplay.h"
+#include "thingSpeakUtil.h"
+
 /*****************************************************************************************************************************************/
 
 #define NUMBER_OF_NODES 5
@@ -217,7 +219,7 @@ void setup() {
 
 /******************************************************************/
     char jsonResponse[255];
-    readThingSpeak(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    readThingSpeak(cfg.thingSpeakAddress, cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
 
     char dst[20];
     for(uint8_t i=0; i < 5; i++){
@@ -388,14 +390,14 @@ void updateThingSpeak(uint8_t nodeID) {
 
 }
 
-void readThingSpeak(char* apiKey, char* channel, char* json) {
+void readThingSpeak(char* thingSpeakAddress, char* apiKey, char* channel, char* json) {
   char getParam[80] =  "GET /channels/";
   strcat(getParam, channel);
   strcat(getParam, "/feeds/last.json?api_key=");
   strcat(getParam, apiKey);
   strcat(getParam, " HTTP/1.1\n");
 
-  if (client.connect(cfg.thingSpeakAddress, 80)) {
+  if (client.connect(thingSpeakAddress, 80)) {
     Serial.println("readThingSpeak: Wifi client connected to server.");
     Serial.println(getParam);
     client.print(getParam);
