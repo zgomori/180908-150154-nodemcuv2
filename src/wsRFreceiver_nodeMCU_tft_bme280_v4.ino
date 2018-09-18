@@ -70,6 +70,7 @@ WsnSensorDataCache sensorDataCache;
 
 char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
+ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
 WsDisplay wsDisplay(&tft);
 
@@ -131,8 +132,9 @@ void setup() {
 
 /******************************************************************/
     char jsonResponse[255];
-    readThingSpeak(cfg.thingSpeakAddress, cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
-
+    tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
+/*
     char dst[20];
     for(uint8_t i=0; i < 5; i++){
       int8_t fieldNo = cfg.tsNodeConfigArr[1].fieldMapping[i];
@@ -141,31 +143,9 @@ void setup() {
         Serial.println(dst); 
       }
     }
-    
+*/    
  
 }
-
-void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst){
-  long tt = micros();
-  char key[]="\"fieldX\"";
-  key[6] = '0' + fieldNo;
-  char* src = strstr(jsonString+45, key);
-  dst[0] = 0;
-  if(src){
-    //  "fieldX":"
-    //            ^ this is src + 10
-    src = src + 10;
-    uint8_t i = 0;
-    while( (src[i] != 0) && (src[i] != '\"')) {
-       dst[i] = src[i];
-       i++;  
-    }
-    dst[i] = 0;
-  }
-  Serial.println(micros() - tt);
-}
-
-
 
 void loop() {
     newDataFromNode = -1;
@@ -180,13 +160,6 @@ void loop() {
     if (newDataFromNode > -1){
       sensorDataCache.add(sensorNodeMessage);
 
-/*
-  char * xxptr2 =  sensorDataCache.getRow(newDataFromNode); 
-  Serial.println(xxptr2);
-  xxptr2 = xxptr2 +6;  
-  Serial.println(xxptr2);
-
-*/
   Serial.println("++++++++++++++++++");
   Serial.println(sensorDataCache.getValueByIndex(0,0));  
   Serial.println(sensorDataCache.getValueByIndex(0,1));  
@@ -205,7 +178,12 @@ void loop() {
       showData(sensorNodeMessage);
 
       delay(1);      
-      updateThingSpeak(newDataFromNode);
+      //updateThingSpeak(newDataFromNode);
+      if(cfg.thingSpeakAPIKeyArr[newDataFromNode]){
+      	char updateParams[80] = "\0";
+      	sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
+        tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
+      }
       delay(1);
 
 
@@ -249,7 +227,7 @@ void getRadioMessage(WsSensorNodeMessage &_sensorNodeMessage) {
 }
 
 
-
+/*
 void updateThingSpeak(uint8_t nodeID) {
   char params[70] = "\0";
   sensorDataCache.createThingSpeakParam(nodeID, params);
@@ -284,14 +262,6 @@ void updateThingSpeak(uint8_t nodeID) {
       //yield();
       delay(10);    
     }
-    /*
-    Serial.println("===RESPONSE BEGIN===");
-    while(client.available()){
-      String line = client.readStringUntil('\r');
-      Serial.println(line);
-    }
-    Serial.println("===RESPONSE END===");
-    */
     client.stop();
     Serial.println("===CLIENT STOP===");
     
@@ -354,19 +324,9 @@ void readThingSpeak(char* thingSpeakAddress, char* apiKey, char* channel, char* 
   }
 
 }
-
-/*
-void tsParamAdd(char* value, char* dst, byte &sensorSet, const uint8_t &valueType, uint8_t &fieldCnt){
-    if (bitRead(sensorSet,valueType)){
-      fieldCnt++;
-      strncat(dst, &urlParamConstArray[0],5);
-      strncat(dst, &urlParamConstArray[fieldCnt+4],1);
-      strncat(dst, &urlParamConstArray[10],1);
-      strcat(dst, value);
-      strncat(dst, &urlParamConstArray[11],1);
-    }
-}
 */
+
+
 
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
@@ -463,41 +423,6 @@ char* deblank(char* input)
     }
     output[j]=0;
     return output;
-}
-*/
-
-/*
-void printText(char* text, DisplayBlock &diplayBlock, TextArea &textArea){
-    int cursorX;
-    int cursorY;
-    int16_t  tempX, tempY;
-    uint16_t tempW, tempH;
-    
-    tft.setFont(textArea.font);
-
-    cursorY = diplayBlock.y + textArea.y + textArea.h -1;
-    if(textArea.align == TA_LEFT){
-      cursorX = diplayBlock.x + textArea.x;
-    }
-    else{
-  
-//      int str_len = text.length() + 1; 
-//      char char_array[str_len];
-//      text.toCharArray(char_array, str_len);
-//      tft.getTextBounds(char_array, 0, 0, &tempX, &tempY, &tempW, &tempH); 
-
-
-      tft.getTextBounds(text, 0, 0, &tempX, &tempY, &tempW, &tempH); 
-
-      
-      cursorX = diplayBlock.x + textArea.x + (textArea.w / 2) - (tempW / 2) - 1; 
-    }
-
-    tft.fillRect(diplayBlock.x + textArea.x, diplayBlock.y + textArea.y ,textArea.w , textArea.h + 1, diplayBlock.bgColor);
-//    tft.fillRect(diplayBlock.x + textArea.x, diplayBlock.y + textArea.y ,textArea.w , textArea.h +1, ILI9341_RED);
-
-    tft.setCursor(cursorX, cursorY);
-    tft.print(text);
 }
 */
 

@@ -6,10 +6,6 @@ ThingSpeakUtil::ThingSpeakUtil(WiFiClient client, char* thingSpeakAddress){
 }
 
 void ThingSpeakUtil::update(char* apiKey, char* params){
-/*
-	char params[70] = "\0";
-	sensorDataCache.createThingSpeakParam(nodeID, params);
-*/
 	Serial.println(params); 
 
 	//  Serial.print("Connecting to ");
