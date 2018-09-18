@@ -2,7 +2,7 @@
 	#define WSN_SENSOR_DATA_CACHE_H
 	
 	//#include "ESP8266WiFi.h"
-	#include "WS_library.h"
+	#include "WsnCommon.h"
 	#include "Arduino.h" 
 
 	#define NUMBER_OF_NODES 5

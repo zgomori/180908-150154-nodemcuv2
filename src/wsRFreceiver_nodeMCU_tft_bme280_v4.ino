@@ -16,7 +16,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-#include "WS_library.h"
+#include "WsnCommon.h"
 #include "WsDisplay.h"
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"

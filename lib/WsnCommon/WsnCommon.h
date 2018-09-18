@@ -1,5 +1,5 @@
-#ifndef WS_LIBRARY_H
-#define WS_LIBRARY_H
+#ifndef WSN_COMMON_H
+#define WSN_COMMON_H
 
 #include "Arduino.h"
 
