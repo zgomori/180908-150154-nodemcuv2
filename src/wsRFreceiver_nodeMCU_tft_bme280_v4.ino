@@ -4,7 +4,6 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
-
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
@@ -21,18 +20,14 @@
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
 
-
 #define RADIO_CE_PIN   D3
-
 #define RADIO_CSN_PIN  D0
 
 #define TFT_DC D4
 #define TFT_CS D8
 //#define TFT_CS D2
 
-
 #define TOUCH_CS_PIN  D2
-
 /*  BME280      NodeMCU
  *  VCC
  *  GND
@@ -44,9 +39,6 @@
 
 #define BME_CS D1
 
-
-
-
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 Adafruit_ILI9341    tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
@@ -56,17 +48,14 @@ WiFiClient client;
 
 WsReceiverConfig cfg;
 
-
 uint32_t touchedMillis = millis();
 uint32_t sensorMillis = millis();
 
-const char urlParamConstArray[13] = "field12345=&";
 int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 
 WsnSensorDataCache sensorDataCache; 
-
 
 char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
@@ -88,7 +77,6 @@ void setup() {
 
     initWifi(cfg);
 
-
     tft.begin();
 
     touch.begin();  // Must be done before setting rotation
@@ -96,8 +84,6 @@ void setup() {
 
     tft.setRotation(0);
     tft.fillScreen(ILI9341_WHITE);
-
-
 
     bool status = bme.begin();  
     if (!status) {
@@ -110,7 +96,6 @@ void setup() {
                     Adafruit_BME280::SAMPLING_X1, // pressure
                     Adafruit_BME280::SAMPLING_X1, // humidity
                     Adafruit_BME280::FILTER_OFF   );
-
 
 
     wsDisplay.defineBlock(0,   0,    240,  100,   ILI9341_MAROON, 0);
@@ -187,10 +172,10 @@ void loop() {
       delay(1);
 
 
-      if (sensorNodeMessage.nodeID == 0){
+      if (newDataFromNode == 0){
         wsDisplay.showBlock(1);
       }  
-      if (sensorNodeMessage.nodeID == 1){
+      if (newDataFromNode == 1){
         wsDisplay.showBlock(2);
       }  
     }
