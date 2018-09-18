@@ -6,10 +6,10 @@
     void WsnSensorDataCache::add(WsSensorNodeMessage &sensorNodeMessage){
       char charConvBuffer[10];
       sensorCacheArr[sensorNodeMessage.nodeID].sensorSet = sensorNodeMessage.sensorSet;
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cTemperature, dtostrf(sensorNodeMessage.temperature,1,TS_TEMPERATURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cHumidity, dtostrf(sensorNodeMessage.humidity,1,TS_HUMIDITY_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cPressure, dtostrf(sensorNodeMessage.pressure,1,TS_PRESSURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cBatteryVoltage, dtostrf(sensorNodeMessage.batteryVoltage,1,TS_BATTERY_PREC,charConvBuffer));
+      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cTemperature, dtostrf(sensorNodeMessage.temperature,1,WSN_TEMPERATURE_PREC,charConvBuffer));
+      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cHumidity, dtostrf(sensorNodeMessage.humidity,1,WSN_HUMIDITY_PREC,charConvBuffer));
+      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cPressure, dtostrf(sensorNodeMessage.pressure,1,WSN_PRESSURE_PREC,charConvBuffer));
+      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cBatteryVoltage, dtostrf(sensorNodeMessage.batteryVoltage,1,WSN_BATTERY_PREC,charConvBuffer));
       strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cMessageCnt, dtostrf(sensorNodeMessage.messageCnt,1,0,charConvBuffer));
     }
 

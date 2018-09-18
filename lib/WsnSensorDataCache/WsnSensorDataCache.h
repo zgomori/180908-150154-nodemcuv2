@@ -6,10 +6,10 @@
 	#include "Arduino.h" 
 
 	#define NUMBER_OF_NODES 5
-	#define TS_TEMPERATURE_PREC 1
-	#define TS_HUMIDITY_PREC 1
-	#define TS_PRESSURE_PREC 0
-	#define TS_BATTERY_PREC 2
+	#define WSN_TEMPERATURE_PREC 1
+	#define WSN_HUMIDITY_PREC 1
+	#define WSN_PRESSURE_PREC 0
+	#define WSN_BATTERY_PREC 2
 
 	class WsnSensorDataCache{
 		private:
