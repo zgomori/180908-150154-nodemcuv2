@@ -19,95 +19,7 @@
 #include "WS_library.h"
 #include "WsDisplay.h"
 #include "thingSpeakUtil.h"
-
-/*****************************************************************************************************************************************/
-
-#define NUMBER_OF_NODES 5
-#define TS_TEMPERATURE_PREC 1
-#define TS_HUMIDITY_PREC 1
-#define TS_PRESSURE_PREC 0
-#define TS_BATTERY_PREC 2
-
-class WsSensorDataCache{
-
-  private:
-    typedef struct{
-      char cTemperature[6];
-      char cHumidity[6];
-      char cPressure[5];
-      char cBatteryVoltage[5];
-      char cMessageCnt[7];
-      byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
-    } WsSensorNodeData;
-    WsSensorNodeData sensorCacheArr[NUMBER_OF_NODES];
-
-  public:
-    WsSensorDataCache(){
-    }
-
-    void add(WsSensorNodeMessage &sensorNodeMessage){
-      char charConvBuffer[10];
-      sensorCacheArr[sensorNodeMessage.nodeID].sensorSet = sensorNodeMessage.sensorSet;
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cTemperature, dtostrf(sensorNodeMessage.temperature,1,TS_TEMPERATURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cHumidity, dtostrf(sensorNodeMessage.humidity,1,TS_HUMIDITY_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cPressure, dtostrf(sensorNodeMessage.pressure,1,TS_PRESSURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cBatteryVoltage, dtostrf(sensorNodeMessage.batteryVoltage,1,TS_BATTERY_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cMessageCnt, dtostrf(sensorNodeMessage.messageCnt,1,0,charConvBuffer));
-      
-    }
-
-    char* getTemperature(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cTemperature;
-    }
-
-    char* getHumidity(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cHumidity;
-    }
-
-    char* getPressure(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cPressure;
-    }
-
-    char* getBatteryVoltage(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cBatteryVoltage;
-    }
-
-    char* getMessageCnt(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cMessageCnt;
-    }
-
-    char* getValueByIndex(uint8_t nodeID, uint8_t idx){
-      static uint8_t ptrOffset[5] = {0,6,12,17,22};
-      char* ptr = sensorCacheArr[nodeID].cTemperature;
-      return ptr + ptrOffset[idx];
-    }
-
-    void createThingSpeakParam(uint8_t nodeID, char* dst){
-      static const char urlParamConstArray[13] = "field12345=&";
-      uint8_t fieldCnt = 0;
-      
-      for(uint8_t i=0; i<5; i++){
-        if (bitRead(sensorCacheArr[nodeID].sensorSet,i)){
-          fieldCnt++;
-          strncat(dst, &urlParamConstArray[0],5);
-          strncat(dst, &urlParamConstArray[fieldCnt+4],1);
-          strncat(dst, &urlParamConstArray[10],1);
-          strcat(dst, getValueByIndex(nodeID,i));
-          strncat(dst, &urlParamConstArray[11],1);
-        }
-      }      
-    }
-            
-    char* getRow(int idx){
-      return (char*)&(sensorCacheArr[idx]);
-    }
-    
-}; 
-/***************************************************************************************************************************/
-
-
-
-
+#include "WsnSensorDataCache.h"
 
 
 #define RADIO_CE_PIN   D3
@@ -153,7 +65,7 @@ int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 
-WsSensorDataCache sensorDataCache; 
+WsnSensorDataCache sensorDataCache; 
 
 
 char charConvBuffer[10];

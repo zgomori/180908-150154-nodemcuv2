@@ -1,3 +1,6 @@
+#ifndef WS_LIBRARY_H
+	#define WS_LIBRARY_H
+
 #define WSN_TEMP 0
 #define WSN_HUM 1
 #define WSN_AIRP 2
@@ -59,3 +62,5 @@ typedef struct{
   char cBatteryVoltage[5];
   char cMessageCnt[7];
 } WsSensorNodeData;
+
+#endif
