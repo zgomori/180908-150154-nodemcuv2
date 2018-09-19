@@ -34,8 +34,10 @@
 			char* getPressure(uint8_t nodeID);
 			char* getBatteryVoltage(uint8_t nodeID);
 			char* getMessageCnt(uint8_t nodeID);
+			byte getSensorSet(uint8_t nodeID);
 			char* getValueByIndex(uint8_t nodeID, uint8_t idx);
 			void createThingSpeakParam(uint8_t nodeID, char* dst);
+			void dump();
 			
     };    
 #endif

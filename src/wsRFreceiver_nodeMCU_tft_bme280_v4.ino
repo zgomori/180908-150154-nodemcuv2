@@ -117,10 +117,16 @@ void setup() {
 
 /******************************************************************/
     char jsonResponse[255];
-    tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
     sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
-  
- 
+    delay(100);
+
+    tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(7, cfg.tsNodeConfigArr[1].fieldMapping, jsonResponse);
+    delay(100);
+
+    sensorDataCache.dump();
+    delay(100);
 }
 
 void loop() {

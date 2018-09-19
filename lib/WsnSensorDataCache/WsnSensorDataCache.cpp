@@ -1,6 +1,14 @@
 #include "WsnSensorDataCache.h"
 
     WsnSensorDataCache::WsnSensorDataCache(){
+      for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
+      sensorCacheArr[i].sensorSet = 0;
+      strcpy(sensorCacheArr[i].cTemperature, "0.0");
+      strcpy(sensorCacheArr[i].cHumidity, "0.0");
+      strcpy(sensorCacheArr[i].cPressure, "0");
+      strcpy(sensorCacheArr[i].cBatteryVoltage, "0.00");
+      strcpy(sensorCacheArr[i].cMessageCnt, "0");
+      }
     }
 
     void WsnSensorDataCache::add(WsSensorNodeMessage &sensorNodeMessage){
@@ -44,6 +52,10 @@
 
     char* WsnSensorDataCache::getMessageCnt(uint8_t nodeID){
       return sensorCacheArr[nodeID].cMessageCnt;
+    }
+
+    byte WsnSensorDataCache::getSensorSet(uint8_t nodeID){
+       return sensorCacheArr[nodeID].sensorSet; 
     }
 
     char* WsnSensorDataCache::getValueByIndex(uint8_t nodeID, uint8_t idx){
@@ -93,3 +105,16 @@
       }
   }
 
+  void WsnSensorDataCache::dump(){
+    Serial.println("==SensorDataCache dump==");
+    for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
+      Serial.println(i);
+      for(int8_t j = 0; j < 5; j++){
+        Serial.print(getValueByIndex(i,j));
+        Serial.print(" ");
+      }
+      Serial.println(getSensorSet(i));
+      yield();
+    }
+    Serial.println("==end of SensorDataCache dump==");
+  }
