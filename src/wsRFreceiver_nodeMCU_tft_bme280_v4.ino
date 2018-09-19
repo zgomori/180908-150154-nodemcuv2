@@ -4,7 +4,6 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
-
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
@@ -16,111 +15,19 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
-#include "WS_library.h"
+#include "WsnCommon.h"
 #include "WsDisplay.h"
 #include "thingSpeakUtil.h"
-
-/*****************************************************************************************************************************************/
-
-#define NUMBER_OF_NODES 5
-#define TS_TEMPERATURE_PREC 1
-#define TS_HUMIDITY_PREC 1
-#define TS_PRESSURE_PREC 0
-#define TS_BATTERY_PREC 2
-
-class WsSensorDataCache{
-
-  private:
-    typedef struct{
-      char cTemperature[6];
-      char cHumidity[6];
-      char cPressure[5];
-      char cBatteryVoltage[5];
-      char cMessageCnt[7];
-      byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
-    } WsSensorNodeData;
-    WsSensorNodeData sensorCacheArr[NUMBER_OF_NODES];
-
-  public:
-    WsSensorDataCache(){
-    }
-
-    void add(WsSensorNodeMessage &sensorNodeMessage){
-      char charConvBuffer[10];
-      sensorCacheArr[sensorNodeMessage.nodeID].sensorSet = sensorNodeMessage.sensorSet;
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cTemperature, dtostrf(sensorNodeMessage.temperature,1,TS_TEMPERATURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cHumidity, dtostrf(sensorNodeMessage.humidity,1,TS_HUMIDITY_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cPressure, dtostrf(sensorNodeMessage.pressure,1,TS_PRESSURE_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cBatteryVoltage, dtostrf(sensorNodeMessage.batteryVoltage,1,TS_BATTERY_PREC,charConvBuffer));
-      strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cMessageCnt, dtostrf(sensorNodeMessage.messageCnt,1,0,charConvBuffer));
-      
-    }
-
-    char* getTemperature(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cTemperature;
-    }
-
-    char* getHumidity(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cHumidity;
-    }
-
-    char* getPressure(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cPressure;
-    }
-
-    char* getBatteryVoltage(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cBatteryVoltage;
-    }
-
-    char* getMessageCnt(uint8_t nodeID){
-      return sensorCacheArr[nodeID].cMessageCnt;
-    }
-
-    char* getValueByIndex(uint8_t nodeID, uint8_t idx){
-      static uint8_t ptrOffset[5] = {0,6,12,17,22};
-      char* ptr = sensorCacheArr[nodeID].cTemperature;
-      return ptr + ptrOffset[idx];
-    }
-
-    void createThingSpeakParam(uint8_t nodeID, char* dst){
-      static const char urlParamConstArray[13] = "field12345=&";
-      uint8_t fieldCnt = 0;
-      
-      for(uint8_t i=0; i<5; i++){
-        if (bitRead(sensorCacheArr[nodeID].sensorSet,i)){
-          fieldCnt++;
-          strncat(dst, &urlParamConstArray[0],5);
-          strncat(dst, &urlParamConstArray[fieldCnt+4],1);
-          strncat(dst, &urlParamConstArray[10],1);
-          strcat(dst, getValueByIndex(nodeID,i));
-          strncat(dst, &urlParamConstArray[11],1);
-        }
-      }      
-    }
-            
-    char* getRow(int idx){
-      return (char*)&(sensorCacheArr[idx]);
-    }
-    
-}; 
-/***************************************************************************************************************************/
-
-
-
-
-
+#include "WsnSensorDataCache.h"
 
 #define RADIO_CE_PIN   D3
-
 #define RADIO_CSN_PIN  D0
 
 #define TFT_DC D4
 #define TFT_CS D8
 //#define TFT_CS D2
 
-
 #define TOUCH_CS_PIN  D2
-
 /*  BME280      NodeMCU
  *  VCC
  *  GND
@@ -132,9 +39,6 @@ class WsSensorDataCache{
 
 #define BME_CS D1
 
-
-
-
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 Adafruit_ILI9341    tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
@@ -144,20 +48,18 @@ WiFiClient client;
 
 WsReceiverConfig cfg;
 
-
 uint32_t touchedMillis = millis();
 uint32_t sensorMillis = millis();
 
-const char urlParamConstArray[13] = "field12345=&";
 int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 
-WsSensorDataCache sensorDataCache; 
-
+WsnSensorDataCache sensorDataCache; 
 
 char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
+ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
 WsDisplay wsDisplay(&tft);
 
@@ -175,7 +77,6 @@ void setup() {
 
     initWifi(cfg);
 
-
     tft.begin();
 
     touch.begin();  // Must be done before setting rotation
@@ -183,8 +84,6 @@ void setup() {
 
     tft.setRotation(0);
     tft.fillScreen(ILI9341_WHITE);
-
-
 
     bool status = bme.begin();  
     if (!status) {
@@ -197,7 +96,6 @@ void setup() {
                     Adafruit_BME280::SAMPLING_X1, // pressure
                     Adafruit_BME280::SAMPLING_X1, // humidity
                     Adafruit_BME280::FILTER_OFF   );
-
 
 
     wsDisplay.defineBlock(0,   0,    240,  100,   ILI9341_MAROON, 0);
@@ -219,41 +117,17 @@ void setup() {
 
 /******************************************************************/
     char jsonResponse[255];
-    readThingSpeak(cfg.thingSpeakAddress, cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
+    delay(100);
 
-    char dst[20];
-    for(uint8_t i=0; i < 5; i++){
-      int8_t fieldNo = cfg.tsNodeConfigArr[1].fieldMapping[i];
-      if (fieldNo != -1){
-        getJsonFieldValue(jsonResponse, fieldNo,  dst);
-        Serial.println(dst); 
-      }
-    }
-    
- 
+    tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(7, cfg.tsNodeConfigArr[1].fieldMapping, jsonResponse);
+    delay(100);
+
+    sensorDataCache.dump();
+    delay(100);
 }
-
-void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst){
-  long tt = micros();
-  char key[]="\"fieldX\"";
-  key[6] = '0' + fieldNo;
-  char* src = strstr(jsonString+45, key);
-  dst[0] = 0;
-  if(src){
-    //  "fieldX":"
-    //            ^ this is src + 10
-    src = src + 10;
-    uint8_t i = 0;
-    while( (src[i] != 0) && (src[i] != '\"')) {
-       dst[i] = src[i];
-       i++;  
-    }
-    dst[i] = 0;
-  }
-  Serial.println(micros() - tt);
-}
-
-
 
 void loop() {
     newDataFromNode = -1;
@@ -268,13 +142,6 @@ void loop() {
     if (newDataFromNode > -1){
       sensorDataCache.add(sensorNodeMessage);
 
-/*
-  char * xxptr2 =  sensorDataCache.getRow(newDataFromNode); 
-  Serial.println(xxptr2);
-  xxptr2 = xxptr2 +6;  
-  Serial.println(xxptr2);
-
-*/
   Serial.println("++++++++++++++++++");
   Serial.println(sensorDataCache.getValueByIndex(0,0));  
   Serial.println(sensorDataCache.getValueByIndex(0,1));  
@@ -293,14 +160,19 @@ void loop() {
       showData(sensorNodeMessage);
 
       delay(1);      
-      updateThingSpeak(newDataFromNode);
+      //updateThingSpeak(newDataFromNode);
+      if(cfg.thingSpeakAPIKeyArr[newDataFromNode]){
+      	char updateParams[80] = "\0";
+      	sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
+        tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
+      }
       delay(1);
 
 
-      if (sensorNodeMessage.nodeID == 0){
+      if (newDataFromNode == 0){
         wsDisplay.showBlock(1);
       }  
-      if (sensorNodeMessage.nodeID == 1){
+      if (newDataFromNode == 1){
         wsDisplay.showBlock(2);
       }  
     }
@@ -336,125 +208,6 @@ void getRadioMessage(WsSensorNodeMessage &_sensorNodeMessage) {
   }
 }
 
-
-
-void updateThingSpeak(uint8_t nodeID) {
-  char params[70] = "\0";
-  sensorDataCache.createThingSpeakParam(nodeID, params);
-  Serial.println(params); 
-
-//  Serial.print("Connecting to ");
-  Serial.println(cfg.thingSpeakAPIKeyArr[nodeID]);
-  if (client.connect(cfg.thingSpeakAddress, 80)) {
-    Serial.println("Wifi client connected to server.");
-    client.print(F("POST /update HTTP/1.1\n"));
-    client.print(F("Host: api.thingspeak.com\n"));
-    client.print(F("Connection: close\n"));
-    client.print(F("X-THINGSPEAKAPIKEY: "));
-    client.print(cfg.thingSpeakAPIKeyArr[nodeID]);
-    client.print(F("\n"));
-    client.print(F("Content-Type: application/x-www-form-urlencoded\n"));
-    client.print(F("Content-Length: "));
-    client.print(strlen(params));
-    client.print(F("\n\n"));
- 
-    client.print(params);
-
-    Serial.println("POST request sent.");
-
-    unsigned long clientTimeout = millis();
-    while (client.available() == 0) {
-      if (millis() - clientTimeout > 5000) {
-        Serial.println("Client Timeout !");
-        client.stop();
-        return;
-      }
-      //yield();
-      delay(10);    
-    }
-    /*
-    Serial.println("===RESPONSE BEGIN===");
-    while(client.available()){
-      String line = client.readStringUntil('\r');
-      Serial.println(line);
-    }
-    Serial.println("===RESPONSE END===");
-    */
-    client.stop();
-    Serial.println("===CLIENT STOP===");
-    
-  }
-  else{
-    Serial.println("Connection failed.");
-  }
-
-}
-
-void readThingSpeak(char* thingSpeakAddress, char* apiKey, char* channel, char* json) {
-  char getParam[80] =  "GET /channels/";
-  strcat(getParam, channel);
-  strcat(getParam, "/feeds/last.json?api_key=");
-  strcat(getParam, apiKey);
-  strcat(getParam, " HTTP/1.1\n");
-
-  if (client.connect(thingSpeakAddress, 80)) {
-    Serial.println("readThingSpeak: Wifi client connected to server.");
-    Serial.println(getParam);
-    client.print(getParam);
-    client.print(F("Host: api.thingspeak.com\n"));
-    client.print(F("Connection: close\n"));
-    client.print(F("\n\n"));
- 
-    unsigned long clientTimeout = millis();
-    while (client.available() == 0) {
-      if (millis() - clientTimeout > 5000) {
-        Serial.println("Client Timeout !");
-        client.stop();
-        return;
-      }
-      //yield();
-      delay(10);    
-    }
-    Serial.println("===RESPONSE BEGIN===");
-    char c;
-    boolean startJson = false;
-    uint8_t buffIdx = 0;
-    while(client.available()){
-       c = client.read();
-       if (c == '{'){
-         startJson = true;
-       } 
-       if (startJson){
-         json[buffIdx] = c;
-         buffIdx++;
-       }
-       if (c == '}'){
-         break;
-       }
-    }
-    json[buffIdx] = 0;
-
-    Serial.println(json);
-    client.stop();
-  }
-  else{
-    Serial.println("Connection failed.");
-  }
-
-}
-
-/*
-void tsParamAdd(char* value, char* dst, byte &sensorSet, const uint8_t &valueType, uint8_t &fieldCnt){
-    if (bitRead(sensorSet,valueType)){
-      fieldCnt++;
-      strncat(dst, &urlParamConstArray[0],5);
-      strncat(dst, &urlParamConstArray[fieldCnt+4],1);
-      strncat(dst, &urlParamConstArray[10],1);
-      strcat(dst, value);
-      strncat(dst, &urlParamConstArray[11],1);
-    }
-}
-*/
 
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
@@ -492,18 +245,18 @@ void readConfig(WsReceiverConfig &_cfg){
   strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
   strcpy(_cfg.tsNodeConfigArr[0].thingSpeakReadKey, "9ZTPTLMLNFU8VZU3");
   strcpy(_cfg.tsNodeConfigArr[0].thingSpeakChannel, "340091");
-  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMP] = 1;
-  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMPERATURE] = 1;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUMIDITY] = 2;
   _cfg.tsNodeConfigArr[0].nodeID = 6;
   _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
 
   strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakChannel, "528401");
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMP] = 1;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUM] = 2;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_AIRP] = 3;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MC] = 4;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMPERATURE] = 1;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUMIDITY] = 2;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_PRESSURE] = 3;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MESSAGES] = 4;
   _cfg.tsNodeConfigArr[1].nodeID = 6;
   _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
 
@@ -551,41 +304,6 @@ char* deblank(char* input)
     }
     output[j]=0;
     return output;
-}
-*/
-
-/*
-void printText(char* text, DisplayBlock &diplayBlock, TextArea &textArea){
-    int cursorX;
-    int cursorY;
-    int16_t  tempX, tempY;
-    uint16_t tempW, tempH;
-    
-    tft.setFont(textArea.font);
-
-    cursorY = diplayBlock.y + textArea.y + textArea.h -1;
-    if(textArea.align == TA_LEFT){
-      cursorX = diplayBlock.x + textArea.x;
-    }
-    else{
-  
-//      int str_len = text.length() + 1; 
-//      char char_array[str_len];
-//      text.toCharArray(char_array, str_len);
-//      tft.getTextBounds(char_array, 0, 0, &tempX, &tempY, &tempW, &tempH); 
-
-
-      tft.getTextBounds(text, 0, 0, &tempX, &tempY, &tempW, &tempH); 
-
-      
-      cursorX = diplayBlock.x + textArea.x + (textArea.w / 2) - (tempW / 2) - 1; 
-    }
-
-    tft.fillRect(diplayBlock.x + textArea.x, diplayBlock.y + textArea.y ,textArea.w , textArea.h + 1, diplayBlock.bgColor);
-//    tft.fillRect(diplayBlock.x + textArea.x, diplayBlock.y + textArea.y ,textArea.w , textArea.h +1, ILI9341_RED);
-
-    tft.setCursor(cursorX, cursorY);
-    tft.print(text);
 }
 */
 
