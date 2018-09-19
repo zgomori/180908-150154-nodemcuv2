@@ -5,11 +5,10 @@
 	#include "WsnCommon.h"
 	#include "Arduino.h" 
 
-	#define NUMBER_OF_NODES 5
-	#define WSN_TEMPERATURE_PREC 1
-	#define WSN_HUMIDITY_PREC 1
-	#define WSN_PRESSURE_PREC 0
-	#define WSN_BATTERY_PREC 2
+	#define WSN_TEMPERATURE_DECIMAL 1
+	#define WSN_HUMIDITY_DECIMAL 1
+	#define WSN_PRESSURE_DECIMAL 0
+	#define WSN_BATTERY_DECIMAL 2
 
 	class WsnSensorDataCache{
 		private:
@@ -22,7 +21,7 @@
 				byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
 			} WsnSensorNodeData;
     	
-			WsSensorNodeData sensorCacheArr[NUMBER_OF_NODES];
+			WsSensorNodeData sensorCacheArr[10];
 			void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst);
 			void setValueByIndex(uint8_t nodeID, uint8_t idx, char* value);
 

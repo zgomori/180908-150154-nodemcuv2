@@ -3,11 +3,11 @@
 
 #include "Arduino.h"
 
-#define WSN_TEMP 0
-#define WSN_HUM 1
-#define WSN_AIRP 2
-#define WSN_BV 3
-#define WSN_MC 4
+#define WSN_TEMPERATURE 0
+#define WSN_HUMIDITY 1
+#define WSN_PRESSURE 2
+#define WSN_BATTERY 3
+#define WSN_MESSAGES 4
 
 
 typedef struct{

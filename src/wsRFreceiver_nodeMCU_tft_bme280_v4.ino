@@ -119,16 +119,7 @@ void setup() {
     char jsonResponse[255];
     tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
     sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
-/*
-    char dst[20];
-    for(uint8_t i=0; i < 5; i++){
-      int8_t fieldNo = cfg.tsNodeConfigArr[1].fieldMapping[i];
-      if (fieldNo != -1){
-        getJsonFieldValue(jsonResponse, fieldNo,  dst);
-        Serial.println(dst); 
-      }
-    }
-*/    
+  
  
 }
 
@@ -212,107 +203,6 @@ void getRadioMessage(WsSensorNodeMessage &_sensorNodeMessage) {
 }
 
 
-/*
-void updateThingSpeak(uint8_t nodeID) {
-  char params[70] = "\0";
-  sensorDataCache.createThingSpeakParam(nodeID, params);
-  Serial.println(params); 
-
-//  Serial.print("Connecting to ");
-  Serial.println(cfg.thingSpeakAPIKeyArr[nodeID]);
-  if (client.connect(cfg.thingSpeakAddress, 80)) {
-    Serial.println("Wifi client connected to server.");
-    client.print(F("POST /update HTTP/1.1\n"));
-    client.print(F("Host: api.thingspeak.com\n"));
-    client.print(F("Connection: close\n"));
-    client.print(F("X-THINGSPEAKAPIKEY: "));
-    client.print(cfg.thingSpeakAPIKeyArr[nodeID]);
-    client.print(F("\n"));
-    client.print(F("Content-Type: application/x-www-form-urlencoded\n"));
-    client.print(F("Content-Length: "));
-    client.print(strlen(params));
-    client.print(F("\n\n"));
- 
-    client.print(params);
-
-    Serial.println("POST request sent.");
-
-    unsigned long clientTimeout = millis();
-    while (client.available() == 0) {
-      if (millis() - clientTimeout > 5000) {
-        Serial.println("Client Timeout !");
-        client.stop();
-        return;
-      }
-      //yield();
-      delay(10);    
-    }
-    client.stop();
-    Serial.println("===CLIENT STOP===");
-    
-  }
-  else{
-    Serial.println("Connection failed.");
-  }
-
-}
-
-void readThingSpeak(char* thingSpeakAddress, char* apiKey, char* channel, char* json) {
-  char getParam[80] =  "GET /channels/";
-  strcat(getParam, channel);
-  strcat(getParam, "/feeds/last.json?api_key=");
-  strcat(getParam, apiKey);
-  strcat(getParam, " HTTP/1.1\n");
-
-  if (client.connect(thingSpeakAddress, 80)) {
-    Serial.println("readThingSpeak: Wifi client connected to server.");
-    Serial.println(getParam);
-    client.print(getParam);
-    client.print(F("Host: api.thingspeak.com\n"));
-    client.print(F("Connection: close\n"));
-    client.print(F("\n\n"));
- 
-    unsigned long clientTimeout = millis();
-    while (client.available() == 0) {
-      if (millis() - clientTimeout > 5000) {
-        Serial.println("Client Timeout !");
-        client.stop();
-        return;
-      }
-      //yield();
-      delay(10);    
-    }
-    Serial.println("===RESPONSE BEGIN===");
-    char c;
-    boolean startJson = false;
-    uint8_t buffIdx = 0;
-    while(client.available()){
-       c = client.read();
-       if (c == '{'){
-         startJson = true;
-       } 
-       if (startJson){
-         json[buffIdx] = c;
-         buffIdx++;
-       }
-       if (c == '}'){
-         break;
-       }
-    }
-    json[buffIdx] = 0;
-
-    Serial.println(json);
-    client.stop();
-  }
-  else{
-    Serial.println("Connection failed.");
-  }
-
-}
-*/
-
-
-
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
@@ -349,18 +239,18 @@ void readConfig(WsReceiverConfig &_cfg){
   strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
   strcpy(_cfg.tsNodeConfigArr[0].thingSpeakReadKey, "9ZTPTLMLNFU8VZU3");
   strcpy(_cfg.tsNodeConfigArr[0].thingSpeakChannel, "340091");
-  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMP] = 1;
-  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUM] = 2;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMPERATURE] = 1;
+  _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUMIDITY] = 2;
   _cfg.tsNodeConfigArr[0].nodeID = 6;
   _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
 
   strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakChannel, "528401");
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMP] = 1;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUM] = 2;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_AIRP] = 3;
-  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MC] = 4;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_TEMPERATURE] = 1;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUMIDITY] = 2;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_PRESSURE] = 3;
+  _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MESSAGES] = 4;
   _cfg.tsNodeConfigArr[1].nodeID = 6;
   _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
 
