@@ -180,6 +180,7 @@ void loop() {
       //delay(1);      
       //updateThingSpeak(newDataFromNode);
       if(cfg.thingSpeakAPIKeyArr[newDataFromNode]){
+        Serial.println("Update ThigSpeak");
       	char updateParams[80] = "\0";
       	sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
         tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
