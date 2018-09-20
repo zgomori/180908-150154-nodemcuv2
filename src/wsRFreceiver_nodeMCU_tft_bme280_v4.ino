@@ -4,30 +4,42 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
+/*
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
-
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
 #include <Fonts/MonoSpaced24.h>
+*/
+#include <TFT_eSPI.h>
+#define CF_OL24 &Orbitron_Light_24
+#define CF_OL32 &Orbitron_Light_32
 
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
 #include "WsnCommon.h"
-#include "WsDisplay.h"
+//#include "WsDisplay.h"
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
 
+/*  tft_eSPI library settings*/
+#define TFT_CS   PIN_D8  // Chip select control pin D8
+#define TFT_DC   PIN_D4  // Data Command control pin
+#define TFT_RST  -1  // Reset pin (could connect to NodeMCU RST, see next line)
+#define TOUCH_CS PIN_D2     // Chip select pin (T_CS) of touch screen
+
+/* Adafruit library settings
 #define TFT_DC D4
 #define TFT_CS D8
 //#define TFT_CS D2
-
 #define TOUCH_CS_PIN  D2
+*/
+
 /*  BME280      NodeMCU
  *  VCC
  *  GND
@@ -41,14 +53,19 @@
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
-Adafruit_ILI9341    tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-XPT2046_Touchscreen touch(TOUCH_CS_PIN);
+//Adafruit_ILI9341    tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+//XPT2046_Touchscreen touch(TOUCH_CS_PIN);
+
+TFT_eSPI tft = TFT_eSPI();  
+
+
+
 
 WiFiClient client;
 
 WsReceiverConfig cfg;
 
-uint32_t touchedMillis = millis();
+//uint32_t touchedMillis = millis();
 uint32_t sensorMillis = millis();
 
 int8_t newDataFromNode = -1;
@@ -61,7 +78,6 @@ char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
-WsDisplay wsDisplay(&tft);
 
 void setup() {
     // printf_begin();
@@ -69,7 +85,6 @@ void setup() {
     delay(100);
     Serial.println("Weather Station receiver starting");
     Serial.println(sizeof(WsSensorNodeData));
-    //wsui.test();
 
     readConfig(cfg);
 
@@ -77,13 +92,21 @@ void setup() {
 
     initWifi(cfg);
 
-    tft.begin();
+    tft.init();
 
-    touch.begin();  // Must be done before setting rotation
-    touch.setRotation(0);
+  //  touch.begin();  // Must be done before setting rotation
+  //  touch.setRotation(0);
 
-    tft.setRotation(0);
-    tft.fillScreen(ILI9341_WHITE);
+  //  tft.setRotation(0);
+  //  tft.fillScreen(ILI9341_WHITE);
+
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+
+  
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("09:55", 120, 40, 7);
 
     bool status = bme.begin();  
     if (!status) {
@@ -98,24 +121,6 @@ void setup() {
                     Adafruit_BME280::FILTER_OFF   );
 
 
-    wsDisplay.defineBlock(0,   0,    240,  100,   ILI9341_MAROON, 0);
-    wsDisplay.defineBlock(0,   100,   120,  110,  ILI9341_OLIVE, 0);
-    wsDisplay.defineBlock(120, 100,   120,  110,  ILI9341_ORANGE, 0);
-    wsDisplay.defineBlock(0,   210,  120,  110,   ILI9341_ORANGE, 0);
-    wsDisplay.defineBlock(120, 210,  120,  110,   ILI9341_OLIVE, 0);
-
-    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor1",1);
-    wsDisplay.defineLabel(5,15,0,&FreeMonoBold9pt7b, "Sensor2",2);
-
-    wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(0), 1);
-//    wsDisplay.defineDataField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
-    wsDisplay.defineField(10, 65, 100,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(0), 1);
-    wsDisplay.defineField(10, 20, 100, 34, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getTemperature(1), 2);
-    wsDisplay.defineField(20, 65, 80,  18, 0, &Monospaced_plain_24, wsDisplay.CENTER, sensorDataCache.getHumidity(1), 2);
-
-    wsDisplay.showScreen();
-
-/******************************************************************/
     char jsonResponse[255];
     tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
     sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
@@ -142,20 +147,6 @@ void loop() {
     if (newDataFromNode > -1){
       sensorDataCache.add(sensorNodeMessage);
 
-  Serial.println("++++++++++++++++++");
-  Serial.println(sensorDataCache.getValueByIndex(0,0));  
-  Serial.println(sensorDataCache.getValueByIndex(0,1));  
-  Serial.println(sensorDataCache.getValueByIndex(0,2));  
-  Serial.println(sensorDataCache.getValueByIndex(0,3));  
-  Serial.println(sensorDataCache.getValueByIndex(0,4));  
-  Serial.println("++++++++++++++++++");
-  Serial.println(sensorDataCache.getValueByIndex(1,0));  
-  Serial.println(sensorDataCache.getValueByIndex(1,1));  
-  Serial.println(sensorDataCache.getValueByIndex(1,2));  
-  Serial.println(sensorDataCache.getValueByIndex(1,3));  
-  Serial.println(sensorDataCache.getValueByIndex(1,4));  
-  Serial.println("++++++++++++++++++");
-      
       delay(1);
       showData(sensorNodeMessage);
 
@@ -170,21 +161,46 @@ void loop() {
 
 
       if (newDataFromNode == 0){
-        wsDisplay.showBlock(1);
+        tft.setTextDatum(MC_DATUM);
+        tft.setTextSize(1);
+        tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
+        tft.setTextSize(2);
+        tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
+        /*
+        tft.setTextPadding(90);  
+        tft.setTextDatum(MC_DATUM);
+        tft.setFreeFont(CF_OL32);
+        tft.drawString(sensorDataCache.getTemperature(0), 60, 120, 1);
+        tft.setFreeFont(CF_OL24);
+        tft.drawString(sensorDataCache.getHumidity(0), 60, 160, 1);
+        */
       }  
       if (newDataFromNode == 1){
-        wsDisplay.showBlock(2);
+        tft.setTextSize(1);
+        tft.setTextDatum(MC_DATUM);
+        tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
+        tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
+      /*
+
+        tft.setTextPadding(90);  
+        tft.setTextDatum(MC_DATUM);
+        tft.setFreeFont(CF_OL32);
+        tft.drawString(sensorDataCache.getTemperature(1), 180, 120, 1);
+        tft.setFreeFont(CF_OL24);
+        tft.drawString(sensorDataCache.getHumidity(1), 180, 160, 1);
+        */
       }  
     }
 
     delay(1);
 
-
+/*
     if (touch.touched() && (millis() - touchedMillis > 500)) {
       TS_Point p = touch.getPoint();
       Serial.print("x ="); Serial.print(p.x); Serial.print(" y ="); Serial.println(p.y);
       touchedMillis = millis();
     }
+ */   
 }
 
 //==============
