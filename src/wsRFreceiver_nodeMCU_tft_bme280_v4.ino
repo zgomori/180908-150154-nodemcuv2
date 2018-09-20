@@ -175,7 +175,7 @@ void loop() {
 
     delay(1);
     if (newDataFromNode > -1){
-      //showData(sensorNodeMessage);
+      showData(newDataFromNode);
 
       //delay(1);      
       //updateThingSpeak(newDataFromNode);
@@ -369,22 +369,20 @@ void readSensor(WsSensorNodeMessage &_sensorNodeMessage){
 }      
 
 
-void showData(WsSensorNodeMessage &_sensorNodeMessage) {
-  Serial.println("Data received: ");
-  Serial.print("messageType ");        
-  Serial.println(_sensorNodeMessage.messageType);
-  Serial.print("radioNodeID ");        
-  Serial.println(_sensorNodeMessage.nodeID);
-  Serial.print("sensorSet ");
-  Serial.println(_sensorNodeMessage.sensorSet);
-  Serial.print("temperature ");
-  Serial.println(_sensorNodeMessage.temperature);
-  Serial.print("humidity ");
-  Serial.println(_sensorNodeMessage.humidity);
-  Serial.print("pressure ");
-  Serial.println(_sensorNodeMessage.pressure);
-  Serial.print("batteryVoltage ");
-  Serial.println(_sensorNodeMessage.batteryVoltage);
-  Serial.print("messageCnt ");
-  Serial.println(_sensorNodeMessage.messageCnt);
+void showData(uint8_t nodeID) {
+  Serial.println(F("Data received: "));
+  Serial.print(F("nodeID:        "));        
+  Serial.println(nodeID);
+  Serial.print(F("sensorSet:     "));
+  Serial.println(sensorDataCache.getSensorSet(nodeID));
+  Serial.print(F("temperature:   "));
+  Serial.println(sensorDataCache.getTemperature(nodeID));
+  Serial.print(F("humidity:      "));
+  Serial.println(sensorDataCache.getHumidity(nodeID));
+  Serial.print(F("pressure:      "));
+  Serial.println(sensorDataCache.getPressure(nodeID));
+  Serial.print(F("batteryVoltage:"));
+  Serial.println(sensorDataCache.getBatteryVoltage(nodeID));
+  Serial.print(F("messageCnt:    "));
+  Serial.println(sensorDataCache.getMessageCnt(nodeID));
 }
