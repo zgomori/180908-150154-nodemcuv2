@@ -23,6 +23,7 @@
 //#include "WsDisplay.h"
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
+#include "WsnTimer.h"
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
@@ -73,11 +74,28 @@ uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 
 WsnSensorDataCache sensorDataCache; 
+WsnTimer wsnTimer;
 
 char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
+void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
+  Serial.print("TRIGGER FIRED ");
+  Serial.println(nodeID);
+
+  if (nodeID == 0){
+    readSensor(sensorNodeMessage);
+  }
+  else{
+    char jsonResponse[255];
+    tsUtil.get(cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey, cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
+    delay(100);
+
+  }
+  newDataFromNode = nodeID;
+}
 
 void setup() {
     // printf_begin();
@@ -91,6 +109,9 @@ void setup() {
     initRadioRx(cfg);
 
     initWifi(cfg);
+
+    wsnTimer.init(cfg);
+    wsnTimer.setTriggerFunction(timerTrigger);
 
     tft.init();
 
@@ -120,7 +141,7 @@ void setup() {
                     Adafruit_BME280::SAMPLING_X1, // humidity
                     Adafruit_BME280::FILTER_OFF   );
 
-
+/*
     char jsonResponse[255];
     tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
     sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
@@ -132,25 +153,31 @@ void setup() {
 
     sensorDataCache.dump();
     delay(100);
+*/    
 }
 
 void loop() {
+    // read sensors
     newDataFromNode = -1;
     getRadioMessage(sensorNodeMessage);
 
-    if ((newDataFromNode == -1) && (cfg.sensorSet !=0) && ((millis() - sensorMillis) >= cfg.sensorReadCycleMs)){
-       readSensor(sensorNodeMessage);
-       sensorMillis = millis();
+    if (newDataFromNode > -1){
+      sensorDataCache.add(sensorNodeMessage);
     }
+    else{
+      if (sensorMillis + 10000L <= millis()){
+        wsnTimer.ticker(); 
+        sensorMillis = millis();
+      }
+    }
+    
+    // process sensor data if arrived
 
     delay(1);
     if (newDataFromNode > -1){
-      sensorDataCache.add(sensorNodeMessage);
+      //showData(sensorNodeMessage);
 
-      delay(1);
-      showData(sensorNodeMessage);
-
-      delay(1);      
+      //delay(1);      
       //updateThingSpeak(newDataFromNode);
       if(cfg.thingSpeakAPIKeyArr[newDataFromNode]){
       	char updateParams[80] = "\0";
@@ -255,7 +282,7 @@ void readConfig(WsReceiverConfig &_cfg){
   strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
   strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
   _cfg.sensorSet = 23;
-  _cfg.sensorReadCycleMs = 60000L;
+  _cfg.sensorReadFrequencyMs = 60000L;
   _cfg.elevation = 126;
 
   strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
@@ -264,7 +291,7 @@ void readConfig(WsReceiverConfig &_cfg){
   _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMPERATURE] = 1;
   _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUMIDITY] = 2;
   _cfg.tsNodeConfigArr[0].nodeID = 6;
-  _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
+  _cfg.tsNodeConfigArr[0].readFrequencyMs = 61000L;
 
   strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
@@ -274,7 +301,7 @@ void readConfig(WsReceiverConfig &_cfg){
   _cfg.tsNodeConfigArr[1].fieldMapping[WSN_PRESSURE] = 3;
   _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MESSAGES] = 4;
   _cfg.tsNodeConfigArr[1].nodeID = 6;
-  _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
+  _cfg.tsNodeConfigArr[1].readFrequencyMs = 60000L;
 
 }
 
