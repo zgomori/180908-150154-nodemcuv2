@@ -23,7 +23,7 @@ void WsnTimer::setTriggerFunction(TriggerFunction tf){
 void WsnTimer::ticker(){
 	uint32_t ms = millis();
 	for(uint8_t i = 0; i < 5; i++ ){
-		if (timerArr[i].nodeID = -1){
+		if (timerArr[i].nodeID == -1){
 			break;
 		}
 		if(timerArr[i].lastFireMillis + timerArr[i].frequencyMs <= ms){

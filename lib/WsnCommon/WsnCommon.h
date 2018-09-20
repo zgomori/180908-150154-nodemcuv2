@@ -37,7 +37,7 @@ typedef struct{
   char 		wifiSsid[20];
   char 		wifiPass[20];
   char      thingSpeakAddress[20] = "api.thingspeak.com";
-  char		thingSpeakAPIKeyArr[5][17];
+  char		thingSpeakAPIKeyArr[6][20];
   byte      sensorSet;                  // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
   uint64_t  sensorReadFrequencyMs;          // sensor reading ms
   float		elevation;					// elevation for calculation of relative air pressure (sea level pressure);

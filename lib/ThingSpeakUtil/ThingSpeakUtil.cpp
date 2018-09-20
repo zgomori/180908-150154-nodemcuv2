@@ -43,7 +43,7 @@ void ThingSpeakUtil::update(char* apiKey, char* params){
 		Serial.println("===RESPONSE END===");
 		*/
 		client.stop();
-		Serial.println("===CLIENT STOP===");
+		//Serial.println("===CLIENT STOP===");
   }
   else{
     Serial.println("Connection failed.");
@@ -60,7 +60,7 @@ void ThingSpeakUtil::get(char* apiKey, char* channel, char* json){
 	strcat(getParam, " HTTP/1.1\n");
 
 	if (client.connect(thingSpeakAddress, 80)) {
-		Serial.println("readThingSpeak: Wifi client connected to server.");
+		//Serial.println("readThingSpeak: Wifi client connected to server.");
 		Serial.println(getParam);
 		client.print(getParam);
 		client.print(F("Host: api.thingspeak.com\n"));
@@ -76,7 +76,7 @@ void ThingSpeakUtil::get(char* apiKey, char* channel, char* json){
 			}
 			delay(10);    
 		}
-		Serial.println("===RESPONSE BEGIN===");
+		//Serial.println("===RESPONSE BEGIN===");
 		char c;
 		boolean startJson = false;
 		uint8_t buffIdx = 0;
