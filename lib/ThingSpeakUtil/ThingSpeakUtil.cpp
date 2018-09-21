@@ -107,5 +107,5 @@ boolean ThingSpeakUtil::get(char* apiKey, char* channel, char* json){
 
 	json[buffIdx] = 0;
 	Serial.println(json);
-	return false;
+	return true;
 }

@@ -78,7 +78,6 @@ ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
 /*************************- S E T U P -*****************************************/
 void setup() {
-	// printf_begin();
 	Serial.begin(115200);
 	delay(100);
 	Serial.println("Weather Sensor Network receiver starting");
@@ -101,7 +100,7 @@ void setup() {
 	//  touch.setRotation(0);
 
 	tft.fillScreen(TFT_BLACK);
-	tft.setTextColor(TFT_GREEN);
+	tft.setTextColor(TFT_GREEN,TFT_BLACK);
 
 	tft.setTextDatum(MC_DATUM);
 	tft.drawString("09:55", 120, 40, 7);
@@ -346,20 +345,14 @@ void displayData(uint8_t nodeID){
 		*/
 	}  
 	if (newDataFromNode == 1){
-		tft.setTextSize(1);
-		tft.setTextDatum(MC_DATUM);
 		tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
 		tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
 	}  
 	if (newDataFromNode == 6){
-		tft.setTextDatum(MC_DATUM);
-		tft.setTextSize(1);
 		tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
 		tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
 	}  
 		if (newDataFromNode == 7){
-		tft.setTextSize(1);
-		tft.setTextDatum(MC_DATUM);
 		tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
 		tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
 	}  
