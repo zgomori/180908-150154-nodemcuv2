@@ -80,191 +80,164 @@ char charConvBuffer[10];
 WsnSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
-void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
-  Serial.println("-----------------------");
-  Serial.print("TRIGGER FIRED ");
-  Serial.println(nodeID);
-  Serial.println("-----------------------");
-
-  if (nodeID == 0){
-    readSensor();
-  }
-  else{
-    char jsonResponse[255];
-    tsUtil.get(cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey, cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel, jsonResponse);
-    sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
-    delay(100);
-  }
-  newDataFromNode = nodeID;
-}
 
 void setup() {
-    // printf_begin();
-    Serial.begin(115200);
-    delay(100);
-    Serial.println("Weather Sensor Network receiver starting");
+	// printf_begin();
+	Serial.begin(115200);
+	delay(100);
+	Serial.println("Weather Sensor Network receiver starting");
 
-    readConfig(cfg);
+	readConfig(cfg);
 
-    initRadioRx(cfg);
+	initRadioRx(cfg);
 
-    initWifi(cfg);
+	initWifi(cfg);
 
-    wsnTimer.init(cfg);
-    wsnTimer.setTriggerFunction(timerTrigger);
+	initBME280();
 
-    tft.init();
+	wsnTimer.init(cfg);
+	wsnTimer.setTriggerFunction(timerTrigger);
 
-  //  touch.begin();  // Must be done before setting rotation
-  //  touch.setRotation(0);
-
-  //  tft.setRotation(0);
-  //  tft.fillScreen(ILI9341_WHITE);
-
-
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_GREEN);
-
+	tft.begin();
+	tft.setRotation(0);
   
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString("09:55", 120, 40, 7);
+	//  touch.begin();  // Must be done before setting rotation
+	//  touch.setRotation(0);
 
-    bool status = bme.begin();  
-    if (!status) {
-        Serial.println("Could not find a valid BME280 sensor, check wiring!");
-        while (1);
-    }
-    
-    bme.setSampling(Adafruit_BME280::MODE_FORCED,
-                    Adafruit_BME280::SAMPLING_X1, // temperature
-                    Adafruit_BME280::SAMPLING_X1, // pressure
-                    Adafruit_BME280::SAMPLING_X1, // humidity
-                    Adafruit_BME280::FILTER_OFF   );
+	tft.fillScreen(TFT_BLACK);
+	tft.setTextColor(TFT_GREEN);
 
-/*
-    char jsonResponse[255];
-    tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
-    sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
-    delay(100);
-
-    tsUtil.get(cfg.tsNodeConfigArr[1].thingSpeakReadKey, cfg.tsNodeConfigArr[1].thingSpeakChannel, jsonResponse);
-    sensorDataCache.add(7, cfg.tsNodeConfigArr[1].fieldMapping, jsonResponse);
-    delay(100);
-
-    sensorDataCache.dump();
-    delay(100);
-*/    
+	tft.setTextDatum(MC_DATUM);
+	tft.drawString("09:55", 120, 40, 7);
 }
 
 void loop() {
-    // read sensors
-    newDataFromNode = -1;
-    getRadioMessage(sensorNodeMessage);
+	// read sensors
+	newDataFromNode = -1;
 
-    if (newDataFromNode > -1){
-      sensorDataCache.add(sensorNodeMessage);
-    }
-    else{
-      if (sensorMillis + 10000L <= millis()){
-        Serial.println("++++10 sec");
-        wsnTimer.ticker(); 
-        sensorMillis = millis();
-      }
-    }
-    
-    // process sensor data if arrived
+	getRadioMessage();
 
-    delay(1);
-    if (newDataFromNode > -1){
-      showData(newDataFromNode);
+	if (newDataFromNode == -1){ 
+		if (sensorMillis + 10000L <= millis()){
+		  Serial.println("++++10 sec");
+		  wsnTimer.ticker(); 
+		  sensorMillis = millis();
+		}
+	 }
+	 
+	 // process sensor data if arrived
 
-      //delay(1);      
-      //updateThingSpeak(newDataFromNode);
+	delay(1);
+	if (newDataFromNode > -1){
+		showData(newDataFromNode);
 
-      if((newDataFromNode < 6) && (strlen(cfg.thingSpeakAPIKeyArr[newDataFromNode])>0)){
-        Serial.println("Update ThigSpeak");
-      	char updateParams[80] = "\0";
-      	sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
-        tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
-      }
-      delay(1);
+		if((newDataFromNode < 6) && (strlen(cfg.thingSpeakAPIKeyArr[newDataFromNode])>0)){
+			Serial.println("Update ThigSpeak");
+			char updateParams[80] = "\0";
+			sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
+			tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
+		}
+		delay(1);
 
 
-      if (newDataFromNode == 0){
-        tft.setTextDatum(MC_DATUM);
-        tft.setTextSize(1);
-        tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
-        tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
-        /*
-        tft.setTextPadding(90);  
-        tft.setTextDatum(MC_DATUM);
-        tft.setFreeFont(CF_OL32);
-        tft.drawString(sensorDataCache.getTemperature(0), 60, 120, 1);
-        tft.setFreeFont(CF_OL24);
-        tft.drawString(sensorDataCache.getHumidity(0), 60, 160, 1);
-        */
-      }  
-      if (newDataFromNode == 1){
-        tft.setTextSize(1);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
-        tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
-      /*
+		if (newDataFromNode == 0){
+		  tft.setTextDatum(MC_DATUM);
+		  tft.setTextSize(1);
+		  tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
+		  tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
+		  /*
+		  tft.setTextPadding(90);  
+		  tft.setTextDatum(MC_DATUM);
+		  tft.setFreeFont(CF_OL32);
+		  tft.drawString(sensorDataCache.getTemperature(0), 60, 120, 1);
+		  tft.setFreeFont(CF_OL24);
+		  tft.drawString(sensorDataCache.getHumidity(0), 60, 160, 1);
+		  */
+		}  
+		if (newDataFromNode == 1){
+		  tft.setTextSize(1);
+		  tft.setTextDatum(MC_DATUM);
+		  tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
+		  tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
+		/*
 
-        tft.setTextPadding(90);  
-        tft.setTextDatum(MC_DATUM);
-        tft.setFreeFont(CF_OL32);
-        tft.drawString(sensorDataCache.getTemperature(1), 180, 120, 1);
-        tft.setFreeFont(CF_OL24);
-        tft.drawString(sensorDataCache.getHumidity(1), 180, 160, 1);
-        */
-      }  
-      if (newDataFromNode == 6){
-        tft.setTextDatum(MC_DATUM);
-        tft.setTextSize(1);
-        tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
-        tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
-      }  
-      if (newDataFromNode == 7){
-        tft.setTextSize(1);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
-        tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
-      }  
-    }
+		  tft.setTextPadding(90);  
+		  tft.setTextDatum(MC_DATUM);
+		  tft.setFreeFont(CF_OL32);
+		  tft.drawString(sensorDataCache.getTemperature(1), 180, 120, 1);
+		  tft.setFreeFont(CF_OL24);
+		  tft.drawString(sensorDataCache.getHumidity(1), 180, 160, 1);
+		  */
+		}  
+		if (newDataFromNode == 6){
+		  tft.setTextDatum(MC_DATUM);
+		  tft.setTextSize(1);
+		  tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
+		  tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
+		}  
+		if (newDataFromNode == 7){
+		  tft.setTextSize(1);
+		  tft.setTextDatum(MC_DATUM);
+		  tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
+		  tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
+		}  
+	 }
 
-    delay(1);
+	 delay(1);
 
 /*
-    if (touch.touched() && (millis() - touchedMillis > 500)) {
-      TS_Point p = touch.getPoint();
-      Serial.print("x ="); Serial.print(p.x); Serial.print(" y ="); Serial.println(p.y);
-      touchedMillis = millis();
-    }
+	 if (touch.touched() && (millis() - touchedMillis > 500)) {
+		TS_Point p = touch.getPoint();
+		Serial.print("x ="); Serial.print(p.x); Serial.print(" y ="); Serial.println(p.y);
+		touchedMillis = millis();
+	 }
  */   
 }
 
-//==============
 
-void getRadioMessage(WsnSensorNodeMessage &_sensorNodeMessage) {
-  if ( radio.available(&rfPipeNum) ) {
-    radio.read( &_sensorNodeMessage, sizeof(WsnSensorNodeMessage) );
+void getRadioMessage() {
+	if ( radio.available(&rfPipeNum)) {
+		WsnSensorNodeMessage sensorNodeMessage;
+	 	radio.read(&sensorNodeMessage, sizeof(WsnSensorNodeMessage));
 
-    if(_sensorNodeMessage.nodeID == rfPipeNum){
-      Serial.println("-----------------------");
-      Serial.print("Message received from node ");
-      Serial.println(_sensorNodeMessage.nodeID);
-      Serial.println("-----------------------");
-      newDataFromNode = _sensorNodeMessage.nodeID;
-    }
-    else{  
-      Serial.print("CONFIG ERROR!!! PipeNumber != nodeID: ");
-      Serial.print("PipeNumber: ");
-      Serial.print(rfPipeNum);
-      Serial.print(" nodeID: ");
-      Serial.print(_sensorNodeMessage.nodeID);
-    }
-  }
+		if(sensorNodeMessage.nodeID == rfPipeNum){
+			newDataFromNode = sensorNodeMessage.nodeID;
+			sensorDataCache.add(sensorNodeMessage);
+
+			Serial.println(F("----------------------------"));
+			Serial.print(F("Message received from node "));
+			Serial.println(sensorNodeMessage.nodeID);
+			Serial.println(F("----------------------------"));
+		}
+		else{  
+			Serial.print(F("[ERROR] getRadioMessage: PipeNumber != nodeID "));
+			Serial.print(F("PipeNumber: "));
+			Serial.print(rfPipeNum);
+			Serial.print(F(" nodeID: "));
+			Serial.println(sensorNodeMessage.nodeID);
+		}
+	}
+}
+
+void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
+	Serial.println("-----------------------");
+	Serial.print("TRIGGER FIRED ");
+	Serial.println(nodeID);
+	Serial.println("-----------------------");
+
+	if (nodeID == 0){
+		readSensor();
+	}
+	else{
+		char jsonResponse[255];
+		char* readApiKey = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey;
+		char* channel = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel;
+		if(tsUtil.get(readApiKey, channel, jsonResponse)){
+			sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
+		}
+		delay(100);
+	}
+	newDataFromNode = nodeID;
 }
 
 
@@ -329,7 +302,7 @@ void initRadioRx(WsnReceiverConfig _cfg){
   radio.setPALevel(RF24_PA_LOW);
 
   for(int i=1; i < 6; i++ ){
-    radio.openReadingPipe(i, (_cfg.radioNetworkAddress * 0x100LL)+i);
+	 radio.openReadingPipe(i, (_cfg.radioNetworkAddress * 0x100LL)+i);
   }
   radio.startListening();
   yield();
@@ -338,31 +311,31 @@ void initRadioRx(WsnReceiverConfig _cfg){
 }
 
 void initWifi(WsnReceiverConfig _cfg){
-    WiFi.mode(WIFI_STA); 
-    WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
-    while (WiFi.status() != WL_CONNECTED){
-      Serial.println("Waiting for WIFI connection...");
-      delay(1000);
-    }
-    Serial.println("WiFi Connected to SSID.");
-    printWifiStatus();
-    yield();
+	 WiFi.mode(WIFI_STA); 
+	 WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
+	 while (WiFi.status() != WL_CONNECTED){
+		Serial.println("Waiting for WIFI connection...");
+		delay(1000);
+	 }
+	 Serial.println("WiFi Connected to SSID.");
+	 printWifiStatus();
+	 yield();
 }
 
 /*
 char* deblank(char* input)                                         
 {
-    int i,j;
-    char *output=input;
-    for (i = 0, j = 0; i<strlen(input); i++,j++)          
-    {
-        if (input[i]!=' ')                           
-            output[j]=input[i];                     
-        else
-            j--;                                     
-    }
-    output[j]=0;
-    return output;
+	 int i,j;
+	 char *output=input;
+	 for (i = 0, j = 0; i<strlen(input); i++,j++)          
+	 {
+		  if (input[i]!=' ')                           
+				output[j]=input[i];                     
+		  else
+				j--;                                     
+	 }
+	 output[j]=0;
+	 return output;
 }
 */
 
@@ -402,4 +375,19 @@ void showData(uint8_t nodeID) {
   Serial.println(sensorDataCache.getBatteryVoltage(nodeID));
   Serial.print(F("messageCnt:    "));
   Serial.println(sensorDataCache.getMessageCnt(nodeID));
+}
+
+void initBME280(){
+	bool status = bme.begin();  
+	if (!status) {
+		Serial.println(F("[ERROR] Could not find a valid BME280 sensor, check wiring!"));
+		while (1);
+	}
+
+	bme.setSampling(Adafruit_BME280::MODE_FORCED,
+		Adafruit_BME280::SAMPLING_X1, // temperature
+		Adafruit_BME280::SAMPLING_X1, // pressure
+		Adafruit_BME280::SAMPLING_X1, // humidity
+		Adafruit_BME280::FILTER_OFF   
+	);
 }
