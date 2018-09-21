@@ -11,7 +11,7 @@
       }
     }
 
-    void WsnSensorDataCache::add(WsSensorNodeMessage &sensorNodeMessage){
+    void WsnSensorDataCache::add(WsnSensorNodeMessage &sensorNodeMessage){
       char charConvBuffer[10];
       sensorCacheArr[sensorNodeMessage.nodeID].sensorSet = sensorNodeMessage.sensorSet;
       strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cTemperature, dtostrf(sensorNodeMessage.temperature,1,WSN_TEMPERATURE_DECIMAL,charConvBuffer));

@@ -64,7 +64,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 WiFiClient client;
 
-WsReceiverConfig cfg;
+WsnReceiverConfig cfg;
 
 //uint32_t touchedMillis = millis();
 uint32_t sensorMillis = millis();
@@ -77,7 +77,7 @@ WsnSensorDataCache sensorDataCache;
 WsnTimer wsnTimer;
 
 char charConvBuffer[10];
-WsSensorNodeMessage sensorNodeMessage;
+WsnSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
 void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
@@ -246,9 +246,9 @@ void loop() {
 
 //==============
 
-void getRadioMessage(WsSensorNodeMessage &_sensorNodeMessage) {
+void getRadioMessage(WsnSensorNodeMessage &_sensorNodeMessage) {
   if ( radio.available(&rfPipeNum) ) {
-    radio.read( &_sensorNodeMessage, sizeof(WsSensorNodeMessage) );
+    radio.read( &_sensorNodeMessage, sizeof(WsnSensorNodeMessage) );
 
     if(_sensorNodeMessage.nodeID == rfPipeNum){
       Serial.println("-----------------------");
@@ -289,7 +289,7 @@ void printWifiStatus() {
 }
 
 
-void readConfig(WsReceiverConfig &_cfg){  
+void readConfig(WsnReceiverConfig &_cfg){  
   _cfg.radioNetworkAddress = 0xA0A0A0FFLL;
   _cfg.radioChannel = 101;
   strcpy(_cfg.wifiSsid, "wxIoT");
@@ -321,7 +321,7 @@ void readConfig(WsReceiverConfig &_cfg){
 
 }
 
-void initRadioRx(WsReceiverConfig _cfg){
+void initRadioRx(WsnReceiverConfig _cfg){
   radio.begin();
   radio.setChannel(_cfg.radioChannel);    
   radio.setDataRate( RF24_250KBPS );    
@@ -337,7 +337,7 @@ void initRadioRx(WsReceiverConfig _cfg){
   radio.printDetails();   
 }
 
-void initWifi(WsReceiverConfig _cfg){
+void initWifi(WsnReceiverConfig _cfg){
     WiFi.mode(WIFI_STA); 
     WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
     while (WiFi.status() != WL_CONNECTED){
@@ -368,7 +368,7 @@ char* deblank(char* input)
 
 void readSensor(){
   delay(1);
-  WsSensorNodeMessage _sensorNodeMessage;
+  WsnSensorNodeMessage _sensorNodeMessage;
   localSensorMessageCnt++;
   bme.takeForcedMeasurement();
 

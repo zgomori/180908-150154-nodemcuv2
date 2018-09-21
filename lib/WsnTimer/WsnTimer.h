@@ -20,7 +20,7 @@
 
 		public:
 			WsnTimer();
-			void init(WsReceiverConfig &cfg);
+			void init(WsnReceiverConfig &cfg);
 			void setTriggerFunction(TriggerFunction tf);
 			void ticker();
 	};		

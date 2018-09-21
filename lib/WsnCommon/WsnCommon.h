@@ -18,7 +18,7 @@ typedef struct{
 	int       batteryMeasureCycle;        	// number of loop cycles between two measurement
 	float     aref1v1RaelVoltage;         	// 
 	float     batteryVoltageDividerRatio;  
-} WsSensorNodeConfig;
+} WsnSensorNodeConfig;
 
 typedef struct{ 
 	char      name[16];
@@ -27,7 +27,7 @@ typedef struct{
 	int8_t    fieldMapping[5] = {-1, -1, -1, -1, -1}; // Mapping thingSpeak field numbers to sensor types. Fist element is temp, second is humidity etc. 
 	uint8_t   nodeID;         					// first free nodeID is 6. (0 is the local sensor, 1-5 are the radio nodes)
 	uint64_t  readFrequencyMs;
-} WsTSnodeConfig;
+} WsnTSnodeConfig;
 
 typedef struct{
 	uint64_t  radioNetworkAddress;        // 8 digit hex address. (0xA0A0A0FFLL)  Full tx address is radioNetworkAddress + nodeID (0xA0A0A0FFLL01)
@@ -39,8 +39,8 @@ typedef struct{
 	byte      sensorSet;                  	// bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
 	uint64_t  sensorReadFrequencyMs;      	// sensor reading ms
 	float		elevation;							// elevation for calculation of relative air pressure (sea level pressure);
-	WsTSnodeConfig tsNodeConfigArr[2];		// max array size: 4 
-} WsReceiverConfig;
+	WsnTSnodeConfig tsNodeConfigArr[2];		// max array size: 4 
+} WsnReceiverConfig;
 
 typedef struct{						// structure or radio messages
 	const byte messageType = 1;   // For furthure development 
@@ -52,16 +52,6 @@ typedef struct{						// structure or radio messages
 	float pressure;
 	float batteryVoltage;
 	uint32_t messageCnt;
-} WsSensorNodeMessage;
+} WsnSensorNodeMessage;
 
-/*
-typedef struct{						// structure os sensorDataCache
-	byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
-	char cTemperature[6];
-	char cHumidity[6];
-	char cPressure[5];
-	char cBatteryVoltage[5];
-	char cMessageCnt[7];
-} WsSensorNodeData;
-*/
 #endif
