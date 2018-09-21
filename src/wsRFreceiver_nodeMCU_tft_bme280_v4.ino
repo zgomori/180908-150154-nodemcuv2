@@ -62,6 +62,7 @@ uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 //time_t prevDisplay = 0; // when the digital clock was displayed
 int prevMinuteDisplay = -1;
+int8_t DSTcorrectedTimeZone;
 
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
@@ -301,6 +302,7 @@ void initWifi(WsnReceiverConfig &_cfg){
 }
 
 void initNtpTime(WsnReceiverConfig &_cfg){
+	DSTcorrectedTimeZone = _cfg.timeZone;
 	udp.begin(_cfg.localUdpPort);
 	setSyncProvider(getNtpTime);
 	setSyncInterval(300);
@@ -440,10 +442,19 @@ time_t getNtpTime(){
 			secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
 			secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
 			secsSince1900 |= (unsigned long)packetBuffer[43];
-			return secsSince1900 - 2208988800UL + cfg.timeZone * SECS_PER_HOUR;
+
+			//!!!!!!
+			unsigned long ret = secsSince1900 - 2208988800UL + DSTcorrectedTimeZone * SECS_PER_HOUR;
+			if(isDst(ret)){
+				DSTcorrectedTimeZone = cfg.timeZone + 1;
+				ret = secsSince1900 - 2208988800UL + DSTcorrectedTimeZone * SECS_PER_HOUR;
+				Serial.println("set Daylight Saving Time");
+			}
+			//!!!!!!
+			return ret;
 		}
 	}
-	Serial.println("No NTP Response :-(");
+	Serial.println("[ERROR] No NTP Response");
 	return 0; // return 0 if unable to get the time
 }
 
@@ -469,3 +480,17 @@ void sendNTPpacket(IPAddress &address){
 	udp.endPacket();
 }
 
+bool isDst(time_t theTime){
+	int _month = month(theTime);
+	int _day = day(theTime);
+	int _dow = weekday(theTime);
+
+	if (_month < 3 || _month > 10)  return false; 
+	if (_month > 3 && _month < 10)  return true; 
+
+	int previousSunday = _day - _dow;
+
+	if (_month == 3) return previousSunday >= 25;
+	if (_month == 10) return previousSunday < 25;
+	return false; // this line never gonna happend
+}
