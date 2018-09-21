@@ -9,9 +9,8 @@
 			char* thingSpeakAddress;
 		public:
 			ThingSpeakUtil(WiFiClient client, char* thingSpeakAddress);
-			void update(char* apiKey, char* params);
-			void get(char* apiKey, char* channel, char* json);
+			boolean update(char* apiKey, char* params);
+			boolean get(char* apiKey, char* channel, char* json);
 	};
-
 
 #endif // WS_DISPLAY_H

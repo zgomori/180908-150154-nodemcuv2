@@ -3,7 +3,7 @@
 WsnTimer::WsnTimer(){
 }
 
-void WsnTimer::init(WsReceiverConfig &cfg){
+void WsnTimer::init(WsnReceiverConfig &cfg){
 	timerArr[0].nodeID = 0;
 	timerArr[0].frequencyMs = cfg.sensorReadFrequencyMs;
 	timerArr[0].lastFireMillis = 0;

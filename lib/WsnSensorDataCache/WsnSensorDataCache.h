@@ -27,7 +27,7 @@
 
 		public:
 			WsnSensorDataCache();
-			void add(WsSensorNodeMessage &sensorNodeMessage);
+			void add(WsnSensorNodeMessage &sensorNodeMessage);
 			void add(uint8_t nodeID, int8_t fieldMapping[], char* jsonString);
 			char* getTemperature(uint8_t nodeID);
 			char* getHumidity(uint8_t nodeID);
@@ -38,6 +38,5 @@
 			char* getValueByIndex(uint8_t nodeID, uint8_t idx);
 			void createThingSpeakParam(uint8_t nodeID, char* dst);
 			void dump();
-			
     };    
 #endif
