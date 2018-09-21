@@ -1,8 +1,5 @@
 #include "ESP8266WiFi.h"
-extern "C" {              // light sleep
-#include "user_interface.h"
-  sleep_type_t wifi_get_sleep_type(void);
-}   
+ 
 #include <WiFiUdp.h>
 
 #include "SPI.h"
@@ -293,7 +290,6 @@ void initRadioRx(WsnReceiverConfig &_cfg){
 
 void initWifi(WsnReceiverConfig &_cfg){
 	WiFi.mode(WIFI_STA); 
-	wifi_set_sleep_type(LIGHT_SLEEP_T);
 	WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
 	while (WiFi.status() != WL_CONNECTED){
 		Serial.println("Waiting for WIFI connection...");
