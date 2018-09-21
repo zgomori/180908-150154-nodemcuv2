@@ -1,5 +1,4 @@
 #include "ESP8266WiFi.h"
- 
 #include <WiFiUdp.h>
 
 #include "SPI.h"
@@ -22,6 +21,7 @@
 #include <Adafruit_BME280.h>
 
 #include <TimeLib.h>
+#include "NTPclient.h"
 
 #include "WsnCommon.h"
 //#include "WsDisplay.h"
@@ -74,6 +74,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 WiFiClient client;
 WiFiUDP udp;
+NTPclient ntpClient;
 
 WsnReceiverConfig cfg;
 
@@ -85,6 +86,9 @@ WsnTimer wsnTimer;
 char charConvBuffer[10];
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
+time_t getNtpTime(){
+	return ntpClient.getTime();
+}
 /*************************- S E T U P -*****************************************/
 void setup() {
 	Serial.begin(115200);
@@ -93,13 +97,15 @@ void setup() {
 
 	readConfig(cfg);
 
-	initRadioRx(cfg);
-
 	initWifi(cfg);
 
-	initBME280();
+	ntpClient.init(udp, cfg.ntpServerName, cfg.localUdpPort, cfg.timeZone);
+	setSyncProvider(getNtpTime);
+	setSyncInterval(300);
 
-  initNtpTime(cfg);
+	initRadioRx(cfg);
+
+	initBME280();
 
 	wsnTimer.init(cfg);
 	wsnTimer.setTriggerFunction(timerTrigger);
@@ -301,13 +307,14 @@ void initWifi(WsnReceiverConfig &_cfg){
 	yield();
 }
 
+/*
 void initNtpTime(WsnReceiverConfig &_cfg){
 	DSTcorrectedTimeZone = _cfg.timeZone;
 	udp.begin(_cfg.localUdpPort);
 	setSyncProvider(getNtpTime);
 	setSyncInterval(300);
 }
-
+*/
 
 void readSensor(){
   delay(1);
@@ -415,8 +422,8 @@ void addLeadingZero(int number, char* buff){
 }
 
 /*-------- NTP code ----------*/
-
-const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+/*
+//const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
 
 time_t getNtpTime(){
@@ -494,3 +501,4 @@ bool isDst(time_t theTime){
 	if (_month == 10) return previousSunday < 25;
 	return false; // this line never gonna happend
 }
+*/
