@@ -28,7 +28,7 @@ typedef struct{
   char      thingSpeakChannel[8];
   int8_t    fieldMapping[5] = {-1, -1, -1, -1, -1}; // Mapping thingSpeak field numbers to sensor types. Fist element is temp, second is humidity etc. 
   uint8_t   nodeID;         // first free nodeID is 6. (0 is the local sensor, 1-5 are the radio nodes)
-  uint64_t  readCycleMs;
+  uint64_t  readFrequencyMs;
 } WsTSnodeConfig;
 
 typedef struct{
@@ -37,9 +37,9 @@ typedef struct{
   char 		wifiSsid[20];
   char 		wifiPass[20];
   char      thingSpeakAddress[20] = "api.thingspeak.com";
-  char		thingSpeakAPIKeyArr[5][17];
+  char		thingSpeakAPIKeyArr[6][20];
   byte      sensorSet;                  // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
-  uint64_t  sensorReadCycleMs;          // sensor reading ms
+  uint64_t  sensorReadFrequencyMs;          // sensor reading ms
   float		elevation;					// elevation for calculation of relative air pressure (sea level pressure);
   WsTSnodeConfig tsNodeConfigArr[2];
 } WsReceiverConfig;

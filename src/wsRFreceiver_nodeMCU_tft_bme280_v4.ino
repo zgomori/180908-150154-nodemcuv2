@@ -23,6 +23,7 @@
 //#include "WsDisplay.h"
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
+#include "WsnTimer.h"
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
@@ -73,11 +74,29 @@ uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
 
 WsnSensorDataCache sensorDataCache; 
+WsnTimer wsnTimer;
 
 char charConvBuffer[10];
 WsSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
+void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
+  Serial.println("-----------------------");
+  Serial.print("TRIGGER FIRED ");
+  Serial.println(nodeID);
+  Serial.println("-----------------------");
+
+  if (nodeID == 0){
+    readSensor();
+  }
+  else{
+    char jsonResponse[255];
+    tsUtil.get(cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey, cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel, jsonResponse);
+    sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
+    delay(100);
+  }
+  newDataFromNode = nodeID;
+}
 
 void setup() {
     // printf_begin();
@@ -92,6 +111,9 @@ void setup() {
 
     initWifi(cfg);
 
+    wsnTimer.init(cfg);
+    wsnTimer.setTriggerFunction(timerTrigger);
+
     tft.init();
 
   //  touch.begin();  // Must be done before setting rotation
@@ -102,7 +124,7 @@ void setup() {
 
 
   tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextColor(TFT_GREEN);
 
   
   tft.setTextDatum(MC_DATUM);
@@ -120,7 +142,7 @@ void setup() {
                     Adafruit_BME280::SAMPLING_X1, // humidity
                     Adafruit_BME280::FILTER_OFF   );
 
-
+/*
     char jsonResponse[255];
     tsUtil.get(cfg.tsNodeConfigArr[0].thingSpeakReadKey, cfg.tsNodeConfigArr[0].thingSpeakChannel, jsonResponse);
     sensorDataCache.add(6, cfg.tsNodeConfigArr[0].fieldMapping, jsonResponse);
@@ -132,27 +154,36 @@ void setup() {
 
     sensorDataCache.dump();
     delay(100);
+*/    
 }
 
 void loop() {
+    // read sensors
     newDataFromNode = -1;
     getRadioMessage(sensorNodeMessage);
 
-    if ((newDataFromNode == -1) && (cfg.sensorSet !=0) && ((millis() - sensorMillis) >= cfg.sensorReadCycleMs)){
-       readSensor(sensorNodeMessage);
-       sensorMillis = millis();
+    if (newDataFromNode > -1){
+      sensorDataCache.add(sensorNodeMessage);
     }
+    else{
+      if (sensorMillis + 10000L <= millis()){
+        Serial.println("++++10 sec");
+        wsnTimer.ticker(); 
+        sensorMillis = millis();
+      }
+    }
+    
+    // process sensor data if arrived
 
     delay(1);
     if (newDataFromNode > -1){
-      sensorDataCache.add(sensorNodeMessage);
+      showData(newDataFromNode);
 
-      delay(1);
-      showData(sensorNodeMessage);
-
-      delay(1);      
+      //delay(1);      
       //updateThingSpeak(newDataFromNode);
-      if(cfg.thingSpeakAPIKeyArr[newDataFromNode]){
+
+      if((newDataFromNode < 6) && (strlen(cfg.thingSpeakAPIKeyArr[newDataFromNode])>0)){
+        Serial.println("Update ThigSpeak");
       	char updateParams[80] = "\0";
       	sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
         tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
@@ -164,7 +195,6 @@ void loop() {
         tft.setTextDatum(MC_DATUM);
         tft.setTextSize(1);
         tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
-        tft.setTextSize(2);
         tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
         /*
         tft.setTextPadding(90);  
@@ -190,6 +220,18 @@ void loop() {
         tft.drawString(sensorDataCache.getHumidity(1), 180, 160, 1);
         */
       }  
+      if (newDataFromNode == 6){
+        tft.setTextDatum(MC_DATUM);
+        tft.setTextSize(1);
+        tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
+        tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
+      }  
+      if (newDataFromNode == 7){
+        tft.setTextSize(1);
+        tft.setTextDatum(MC_DATUM);
+        tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
+        tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
+      }  
     }
 
     delay(1);
@@ -210,8 +252,10 @@ void getRadioMessage(WsSensorNodeMessage &_sensorNodeMessage) {
     radio.read( &_sensorNodeMessage, sizeof(WsSensorNodeMessage) );
 
     if(_sensorNodeMessage.nodeID == rfPipeNum){
+      Serial.println("-----------------------");
       Serial.print("Message received from node ");
       Serial.println(_sensorNodeMessage.nodeID);
+      Serial.println("-----------------------");
       newDataFromNode = _sensorNodeMessage.nodeID;
     }
     else{  
@@ -255,7 +299,7 @@ void readConfig(WsReceiverConfig &_cfg){
   strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
   strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
   _cfg.sensorSet = 23;
-  _cfg.sensorReadCycleMs = 60000L;
+  _cfg.sensorReadFrequencyMs = 60000L;
   _cfg.elevation = 126;
 
   strcpy(_cfg.tsNodeConfigArr[0].name, "Peti");
@@ -264,7 +308,7 @@ void readConfig(WsReceiverConfig &_cfg){
   _cfg.tsNodeConfigArr[0].fieldMapping[WSN_TEMPERATURE] = 1;
   _cfg.tsNodeConfigArr[0].fieldMapping[WSN_HUMIDITY] = 2;
   _cfg.tsNodeConfigArr[0].nodeID = 6;
-  _cfg.tsNodeConfigArr[0].readCycleMs = 61000L;
+  _cfg.tsNodeConfigArr[0].readFrequencyMs = 61000L;
 
   strcpy(_cfg.tsNodeConfigArr[1].name, "Central");
   strcpy(_cfg.tsNodeConfigArr[1].thingSpeakReadKey, "JXWWMBZMQZNRMOJK");
@@ -273,8 +317,8 @@ void readConfig(WsReceiverConfig &_cfg){
   _cfg.tsNodeConfigArr[1].fieldMapping[WSN_HUMIDITY] = 2;
   _cfg.tsNodeConfigArr[1].fieldMapping[WSN_PRESSURE] = 3;
   _cfg.tsNodeConfigArr[1].fieldMapping[WSN_MESSAGES] = 4;
-  _cfg.tsNodeConfigArr[1].nodeID = 6;
-  _cfg.tsNodeConfigArr[1].readCycleMs = 60000L;
+  _cfg.tsNodeConfigArr[1].nodeID = 7;
+  _cfg.tsNodeConfigArr[1].readFrequencyMs = 60000L;
 
 }
 
@@ -323,8 +367,9 @@ char* deblank(char* input)
 }
 */
 
-void readSensor(WsSensorNodeMessage &_sensorNodeMessage){
+void readSensor(){
   delay(1);
+  WsSensorNodeMessage _sensorNodeMessage;
   localSensorMessageCnt++;
   bme.takeForcedMeasurement();
 
@@ -336,28 +381,26 @@ void readSensor(WsSensorNodeMessage &_sensorNodeMessage){
   _sensorNodeMessage.batteryVoltage = 0;
   _sensorNodeMessage.messageCnt = localSensorMessageCnt;
 
-  newDataFromNode = _sensorNodeMessage.nodeID;
+  sensorDataCache.add(_sensorNodeMessage);
 
   delay(1);
 }      
 
 
-void showData(WsSensorNodeMessage &_sensorNodeMessage) {
-  Serial.println("Data received: ");
-  Serial.print("messageType ");        
-  Serial.println(_sensorNodeMessage.messageType);
-  Serial.print("radioNodeID ");        
-  Serial.println(_sensorNodeMessage.nodeID);
-  Serial.print("sensorSet ");
-  Serial.println(_sensorNodeMessage.sensorSet);
-  Serial.print("temperature ");
-  Serial.println(_sensorNodeMessage.temperature);
-  Serial.print("humidity ");
-  Serial.println(_sensorNodeMessage.humidity);
-  Serial.print("pressure ");
-  Serial.println(_sensorNodeMessage.pressure);
-  Serial.print("batteryVoltage ");
-  Serial.println(_sensorNodeMessage.batteryVoltage);
-  Serial.print("messageCnt ");
-  Serial.println(_sensorNodeMessage.messageCnt);
+void showData(uint8_t nodeID) {
+  Serial.println(F("Data received: "));
+  Serial.print(F("nodeID:        "));        
+  Serial.println(nodeID);
+  Serial.print(F("sensorSet:     "));
+  Serial.println(sensorDataCache.getSensorSet(nodeID));
+  Serial.print(F("temperature:   "));
+  Serial.println(sensorDataCache.getTemperature(nodeID));
+  Serial.print(F("humidity:      "));
+  Serial.println(sensorDataCache.getHumidity(nodeID));
+  Serial.print(F("pressure:      "));
+  Serial.println(sensorDataCache.getPressure(nodeID));
+  Serial.print(F("batteryVoltage:"));
+  Serial.println(sensorDataCache.getBatteryVoltage(nodeID));
+  Serial.print(F("messageCnt:    "));
+  Serial.println(sensorDataCache.getMessageCnt(nodeID));
 }
