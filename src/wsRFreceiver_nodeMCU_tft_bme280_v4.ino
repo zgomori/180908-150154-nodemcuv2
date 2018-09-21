@@ -52,6 +52,8 @@
 
 #define BME_CS D1
 
+uint32_t sensorMillis = millis();
+
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 //Adafruit_ILI9341    tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
@@ -67,7 +69,7 @@ WiFiClient client;
 WsnReceiverConfig cfg;
 
 //uint32_t touchedMillis = millis();
-uint32_t sensorMillis = millis();
+
 
 int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
@@ -321,23 +323,6 @@ void initWifi(WsnReceiverConfig _cfg){
 	 printWifiStatus();
 	 yield();
 }
-
-/*
-char* deblank(char* input)                                         
-{
-	 int i,j;
-	 char *output=input;
-	 for (i = 0, j = 0; i<strlen(input); i++,j++)          
-	 {
-		  if (input[i]!=' ')                           
-				output[j]=input[i];                     
-		  else
-				j--;                                     
-	 }
-	 output[j]=0;
-	 return output;
-}
-*/
 
 void readSensor(){
   delay(1);
