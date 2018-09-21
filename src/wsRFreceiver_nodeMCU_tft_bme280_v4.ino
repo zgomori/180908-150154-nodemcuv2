@@ -1,4 +1,5 @@
 #include "ESP8266WiFi.h"  
+#include <WiFiUdp.h>
 
 #include "SPI.h"
 #include "nRF24L01.h"
@@ -18,6 +19,8 @@
 
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+
+#include <TimeLib.h>
 
 #include "WsnCommon.h"
 //#include "WsDisplay.h"
@@ -56,6 +59,9 @@ uint32_t sensorMillis = millis();
 int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
+//time_t prevDisplay = 0; // when the digital clock was displayed
+int prevMinuteDisplay = -1;
+
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -65,6 +71,7 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 TFT_eSPI tft = TFT_eSPI();  
 
 WiFiClient client;
+WiFiUDP udp;
 
 WsnReceiverConfig cfg;
 
@@ -90,6 +97,8 @@ void setup() {
 
 	initBME280();
 
+  initNtpTime(cfg);
+
 	wsnTimer.init(cfg);
 	wsnTimer.setTriggerFunction(timerTrigger);
 
@@ -103,13 +112,22 @@ void setup() {
 	tft.setTextColor(TFT_GREEN,TFT_BLACK);
 
 	tft.setTextDatum(MC_DATUM);
-	tft.drawString("09:55", 120, 40, 7);
+	//tft.drawString("00:00", 120, 40, 7);
 }
 
 void loop() {
-	// read sensors
 	newDataFromNode = -1;
 
+	// clock
+	if (timeStatus() != timeNotSet) {
+		if (minute() != prevMinuteDisplay) { //update the display only if time has changed
+			prevMinuteDisplay = minute();
+			displayClock();
+		}
+	}
+	yield();
+
+	// read sensors
 	getRadioMessage();
 
 	if (newDataFromNode == -1){ 
@@ -221,6 +239,11 @@ void readConfig(WsnReceiverConfig &_cfg){
   _cfg.radioChannel = 101;
   strcpy(_cfg.wifiSsid, "wxIoT");
   strcpy(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
+
+	strcpy(_cfg.ntpServerName, "time.google.com");
+	_cfg.timeZone = 1;
+	_cfg.localUdpPort = 8760; 
+
   strcpy(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
   strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
   strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
@@ -248,7 +271,7 @@ void readConfig(WsnReceiverConfig &_cfg){
 
 }
 
-void initRadioRx(WsnReceiverConfig _cfg){
+void initRadioRx(WsnReceiverConfig &_cfg){
   radio.begin();
   radio.setChannel(_cfg.radioChannel);    
   radio.setDataRate( RF24_250KBPS );    
@@ -264,7 +287,7 @@ void initRadioRx(WsnReceiverConfig _cfg){
   radio.printDetails();   
 }
 
-void initWifi(WsnReceiverConfig _cfg){
+void initWifi(WsnReceiverConfig &_cfg){
 	 WiFi.mode(WIFI_STA); 
 	 WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
 	 while (WiFi.status() != WL_CONNECTED){
@@ -275,6 +298,13 @@ void initWifi(WsnReceiverConfig _cfg){
 	 printWifiStatus();
 	 yield();
 }
+
+void initNtpTime(WsnReceiverConfig &_cfg){
+	udp.begin(_cfg.localUdpPort);
+	setSyncProvider(getNtpTime);
+	setSyncInterval(300);
+}
+
 
 void readSensor(){
   delay(1);
@@ -356,4 +386,84 @@ void displayData(uint8_t nodeID){
 		tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
 		tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
 	}  
+}
+
+/*-------- NTP code ----------*/
+
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+
+time_t getNtpTime(){
+	IPAddress ntpServerIP; // NTP server's ip address
+
+	while (udp.parsePacket() > 0) ; // discard any previously received packets
+	Serial.println("Transmit NTP Request");
+	// get a random server from the pool
+	WiFi.hostByName(cfg.ntpServerName, ntpServerIP);
+	Serial.print(cfg.ntpServerName);
+	Serial.print(": ");
+	Serial.println(ntpServerIP);
+	sendNTPpacket(ntpServerIP);
+	uint32_t beginWait = millis();
+	while (millis() - beginWait < 1500) {
+		int size = udp.parsePacket();
+		if (size >= NTP_PACKET_SIZE) {
+			Serial.println("Receive NTP Response");
+			udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+			unsigned long secsSince1900;
+			// convert four bytes starting at location 40 to a long integer
+			secsSince1900 =  (unsigned long)packetBuffer[40] << 24;
+			secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
+			secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
+			secsSince1900 |= (unsigned long)packetBuffer[43];
+			return secsSince1900 - 2208988800UL + cfg.timeZone * SECS_PER_HOUR;
+		}
+	}
+	Serial.println("No NTP Response :-(");
+	return 0; // return 0 if unable to get the time
+}
+
+// send an NTP request to the time server at the given address
+void sendNTPpacket(IPAddress &address){
+	// set all bytes in the buffer to 0
+	memset(packetBuffer, 0, NTP_PACKET_SIZE);
+	// Initialize values needed to form NTP request
+	// (see URL above for details on the packets)
+	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+	packetBuffer[1] = 0;     // Stratum, or type of clock
+	packetBuffer[2] = 6;     // Polling Interval
+	packetBuffer[3] = 0xEC;  // Peer Clock Precision
+	// 8 bytes of zero for Root Delay & Root Dispersion
+	packetBuffer[12] = 49;
+	packetBuffer[13] = 0x4E;
+	packetBuffer[14] = 49;
+	packetBuffer[15] = 52;
+	// all NTP fields have been given values, now
+	// you can send a packet requesting a timestamp:
+	udp.beginPacket(address, 123); //NTP requests are to port 123
+	udp.write(packetBuffer, NTP_PACKET_SIZE);
+	udp.endPacket();
+}
+
+void displayClock(){
+	char tftClock[6];
+	char buff[3];
+	tftClock[0] = '\0';
+	strcat(tftClock, itoa(hour(), buff, 10));
+	strcat(tftClock, ":");
+	addLeadingZero(minute(), buff);
+	strcat(tftClock, buff);
+	
+	//Serial.println(tftClock);
+	tft.drawString(tftClock, 120, 40, 7);
+}
+
+void addLeadingZero(int number, char* buff){
+	if(number < 10){
+		buff[0] = '0';
+		itoa(number, buff+1,10);
+	}
+	else{ 
+		itoa(number, buff,10);
+	}
 }
