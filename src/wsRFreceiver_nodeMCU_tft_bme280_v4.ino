@@ -53,6 +53,9 @@
 #define BME_CS D1
 
 uint32_t sensorMillis = millis();
+int8_t newDataFromNode = -1;
+uint8_t rfPipeNum;
+uint32_t localSensorMessageCnt = 0;
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -61,28 +64,19 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
 TFT_eSPI tft = TFT_eSPI();  
 
-
-
-
 WiFiClient client;
 
 WsnReceiverConfig cfg;
 
 //uint32_t touchedMillis = millis();
 
-
-int8_t newDataFromNode = -1;
-uint8_t rfPipeNum;
-uint32_t localSensorMessageCnt = 0;
-
 WsnSensorDataCache sensorDataCache; 
 WsnTimer wsnTimer;
 
 char charConvBuffer[10];
-WsnSensorNodeMessage sensorNodeMessage;
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
-
+/*************************- S E T U P -*****************************************/
 void setup() {
 	// printf_begin();
 	Serial.begin(115200);
@@ -134,55 +128,14 @@ void loop() {
 		showData(newDataFromNode);
 
 		if((newDataFromNode < 6) && (strlen(cfg.thingSpeakAPIKeyArr[newDataFromNode])>0)){
-			Serial.println("Update ThigSpeak");
+			Serial.println("Update ThingSpeak");
 			char updateParams[80] = "\0";
 			sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
 			tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
 		}
 		delay(1);
 
-
-		if (newDataFromNode == 0){
-		  tft.setTextDatum(MC_DATUM);
-		  tft.setTextSize(1);
-		  tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
-		  tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
-		  /*
-		  tft.setTextPadding(90);  
-		  tft.setTextDatum(MC_DATUM);
-		  tft.setFreeFont(CF_OL32);
-		  tft.drawString(sensorDataCache.getTemperature(0), 60, 120, 1);
-		  tft.setFreeFont(CF_OL24);
-		  tft.drawString(sensorDataCache.getHumidity(0), 60, 160, 1);
-		  */
-		}  
-		if (newDataFromNode == 1){
-		  tft.setTextSize(1);
-		  tft.setTextDatum(MC_DATUM);
-		  tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
-		  tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
-		/*
-
-		  tft.setTextPadding(90);  
-		  tft.setTextDatum(MC_DATUM);
-		  tft.setFreeFont(CF_OL32);
-		  tft.drawString(sensorDataCache.getTemperature(1), 180, 120, 1);
-		  tft.setFreeFont(CF_OL24);
-		  tft.drawString(sensorDataCache.getHumidity(1), 180, 160, 1);
-		  */
-		}  
-		if (newDataFromNode == 6){
-		  tft.setTextDatum(MC_DATUM);
-		  tft.setTextSize(1);
-		  tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
-		  tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
-		}  
-		if (newDataFromNode == 7){
-		  tft.setTextSize(1);
-		  tft.setTextDatum(MC_DATUM);
-		  tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
-		  tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
-		}  
+		displayData(newDataFromNode);
 	 }
 
 	 delay(1);
@@ -375,4 +328,39 @@ void initBME280(){
 		Adafruit_BME280::SAMPLING_X1, // humidity
 		Adafruit_BME280::FILTER_OFF   
 	);
+}
+
+void displayData(uint8_t nodeID){
+	if (newDataFromNode == 0){
+		tft.setTextDatum(MC_DATUM);
+		tft.setTextSize(1);
+		tft.drawString(sensorDataCache.getTemperature(0), 60, 140, 6);
+		tft.drawString(sensorDataCache.getHumidity(0), 60, 180, 4);
+		/*
+		tft.setTextPadding(90);  
+		tft.setTextDatum(MC_DATUM);
+		tft.setFreeFont(CF_OL32);
+		tft.drawString(sensorDataCache.getTemperature(0), 60, 120, 1);
+		tft.setFreeFont(CF_OL24);
+		tft.drawString(sensorDataCache.getHumidity(0), 60, 160, 1);
+		*/
+	}  
+	if (newDataFromNode == 1){
+		tft.setTextSize(1);
+		tft.setTextDatum(MC_DATUM);
+		tft.drawString(sensorDataCache.getTemperature(1), 180, 140, 6);
+		tft.drawString(sensorDataCache.getHumidity(1), 180, 180, 4);  
+	}  
+	if (newDataFromNode == 6){
+		tft.setTextDatum(MC_DATUM);
+		tft.setTextSize(1);
+		tft.drawString(sensorDataCache.getTemperature(6), 60, 240, 6);
+		tft.drawString(sensorDataCache.getHumidity(6), 60, 280, 4);
+	}  
+		if (newDataFromNode == 7){
+		tft.setTextSize(1);
+		tft.setTextDatum(MC_DATUM);
+		tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
+		tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
+	}  
 }
