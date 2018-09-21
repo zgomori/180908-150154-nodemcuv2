@@ -21,7 +21,7 @@
 				byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
 			} WsnSensorNodeData;
     	
-			WsSensorNodeData sensorCacheArr[10];
+			WsnSensorNodeData sensorCacheArr[10];
 			void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst);
 			void setValueByIndex(uint8_t nodeID, uint8_t idx, char* value);
 

@@ -102,8 +102,7 @@ void setup() {
     // printf_begin();
     Serial.begin(115200);
     delay(100);
-    Serial.println("Weather Station receiver starting");
-    Serial.println(sizeof(WsSensorNodeData));
+    Serial.println("Weather Sensor Network receiver starting");
 
     readConfig(cfg);
 

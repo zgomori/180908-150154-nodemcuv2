@@ -54,6 +54,7 @@ typedef struct{						// structure or radio messages
 	uint32_t messageCnt;
 } WsSensorNodeMessage;
 
+/*
 typedef struct{						// structure os sensorDataCache
 	byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
 	char cTemperature[6];
@@ -62,5 +63,5 @@ typedef struct{						// structure os sensorDataCache
 	char cBatteryVoltage[5];
 	char cMessageCnt[7];
 } WsSensorNodeData;
-
+*/
 #endif
