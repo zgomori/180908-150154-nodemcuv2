@@ -1,4 +1,8 @@
-#include "ESP8266WiFi.h"  
+#include "ESP8266WiFi.h"
+extern "C" {              // light sleep
+#include "user_interface.h"
+  sleep_type_t wifi_get_sleep_type(void);
+}   
 #include <WiFiUdp.h>
 
 #include "SPI.h"
@@ -288,15 +292,16 @@ void initRadioRx(WsnReceiverConfig &_cfg){
 }
 
 void initWifi(WsnReceiverConfig &_cfg){
-	 WiFi.mode(WIFI_STA); 
-	 WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
-	 while (WiFi.status() != WL_CONNECTED){
+	WiFi.mode(WIFI_STA); 
+	wifi_set_sleep_type(LIGHT_SLEEP_T);
+	WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
+	while (WiFi.status() != WL_CONNECTED){
 		Serial.println("Waiting for WIFI connection...");
 		delay(1000);
-	 }
-	 Serial.println("WiFi Connected to SSID.");
-	 printWifiStatus();
-	 yield();
+	}
+	Serial.println("WiFi Connected to SSID.");
+	printWifiStatus();
+	yield();
 }
 
 void initNtpTime(WsnReceiverConfig &_cfg){
@@ -388,6 +393,29 @@ void displayData(uint8_t nodeID){
 	}  
 }
 
+void displayClock(){
+	char tftClock[6];
+	char buff[3];
+	tftClock[0] = '\0';
+	strcat(tftClock, itoa(hour(), buff, 10));
+	strcat(tftClock, ":");
+	addLeadingZero(minute(), buff);
+	strcat(tftClock, buff);
+	
+	//Serial.println(tftClock);
+	tft.drawString(tftClock, 120, 40, 7);
+}
+
+void addLeadingZero(int number, char* buff){
+	if(number < 10){
+		buff[0] = '0';
+		itoa(number, buff+1,10);
+	}
+	else{ 
+		itoa(number, buff,10);
+	}
+}
+
 /*-------- NTP code ----------*/
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
@@ -445,25 +473,3 @@ void sendNTPpacket(IPAddress &address){
 	udp.endPacket();
 }
 
-void displayClock(){
-	char tftClock[6];
-	char buff[3];
-	tftClock[0] = '\0';
-	strcat(tftClock, itoa(hour(), buff, 10));
-	strcat(tftClock, ":");
-	addLeadingZero(minute(), buff);
-	strcat(tftClock, buff);
-	
-	//Serial.println(tftClock);
-	tft.drawString(tftClock, 120, 40, 7);
-}
-
-void addLeadingZero(int number, char* buff){
-	if(number < 10){
-		buff[0] = '0';
-		itoa(number, buff+1,10);
-	}
-	else{ 
-		itoa(number, buff,10);
-	}
-}
