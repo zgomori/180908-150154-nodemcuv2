@@ -106,15 +106,13 @@
   }
 
   void WsnSensorDataCache::dump(){
-    Serial.println("==SensorDataCache dump==");
+    Serial.println(F("================SensorDataCache dump================"));
+    Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV    MsgCnt"));
     for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
-      Serial.println(i);
-      for(int8_t j = 0; j < 5; j++){
-        Serial.print(getValueByIndex(i,j));
-        Serial.print(" ");
-      }
-      Serial.println(getSensorSet(i));
+      char buff[64];
+      sprintf(buff, "%2u%10s%10s%10s%10s%10s", i, getTemperature(i), getHumidity(i), getPressure(i), getBatteryVoltage(i), getMessageCnt(i));
+      Serial.println(buff);
       yield();
     }
-    Serial.println("==end of SensorDataCache dump==");
+    Serial.println(F("============End of SensorDataCache dump============="));
   }
