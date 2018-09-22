@@ -162,7 +162,7 @@ void loop() {
 
 		displayData(newDataFromNode);
 
-		sensorDataCache.dump();
+		//sensorDataCache.dump();
 	 }
 
 	 delay(1);
