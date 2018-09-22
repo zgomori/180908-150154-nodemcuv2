@@ -391,23 +391,6 @@ void displayData(uint8_t nodeID){
 
 void displayClock(){
 	char tftClock[6];
-	char buff[3];
-	tftClock[0] = '\0';
-	strcat(tftClock, itoa(hour(), buff, 10));
-	strcat(tftClock, ":");
-	addLeadingZero(minute(), buff);
-	strcat(tftClock, buff);
-	
-	//Serial.println(tftClock);
+	sprintf(tftClock, "%u:%02u",hour(),minute());
 	tft.drawString(tftClock, 120, 40, 7);
-}
-
-void addLeadingZero(int number, char* buff){
-	if(number < 10){
-		buff[0] = '0';
-		itoa(number, buff+1,10);
-	}
-	else{ 
-		itoa(number, buff,10);
-	}
 }
