@@ -1,4 +1,5 @@
-#include "ESP8266WiFi.h"  
+#include "ESP8266WiFi.h"
+#include <WiFiUdp.h>
 
 #include "SPI.h"
 #include "nRF24L01.h"
@@ -18,6 +19,9 @@
 
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+
+#include <TimeLib.h>
+#include "NTPclient.h"
 
 #include "WsnCommon.h"
 //#include "WsDisplay.h"
@@ -56,6 +60,10 @@ uint32_t sensorMillis = millis();
 int8_t newDataFromNode = -1;
 uint8_t rfPipeNum;
 uint32_t localSensorMessageCnt = 0;
+//time_t prevDisplay = 0; // when the digital clock was displayed
+int prevMinuteDisplay = -1;
+int8_t DSTcorrectedTimeZone;
+
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -65,6 +73,8 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 TFT_eSPI tft = TFT_eSPI();  
 
 WiFiClient client;
+WiFiUDP udp;
+NTPclient ntpClient;
 
 WsnReceiverConfig cfg;
 
@@ -76,6 +86,9 @@ WsnTimer wsnTimer;
 char charConvBuffer[10];
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
 
+time_t getNtpTime(){
+	return ntpClient.getTime();
+}
 /*************************- S E T U P -*****************************************/
 void setup() {
 	Serial.begin(115200);
@@ -84,9 +97,13 @@ void setup() {
 
 	readConfig(cfg);
 
-	initRadioRx(cfg);
-
 	initWifi(cfg);
+
+	ntpClient.init(udp, cfg.ntpServerName, cfg.localUdpPort, cfg.timeZone);
+	setSyncProvider(getNtpTime);
+	setSyncInterval(300);
+
+	initRadioRx(cfg);
 
 	initBME280();
 
@@ -100,16 +117,25 @@ void setup() {
 	//  touch.setRotation(0);
 
 	tft.fillScreen(TFT_BLACK);
-	tft.setTextColor(TFT_GREEN,TFT_BLACK);
+//	tft.setTextColor(TFT_GREEN,TFT_BLACK);
+	tft.setTextColor(TFT_DARKGREY,TFT_BLACK);
 
 	tft.setTextDatum(MC_DATUM);
-	tft.drawString("09:55", 120, 40, 7);
 }
 
 void loop() {
-	// read sensors
 	newDataFromNode = -1;
 
+	// clock
+	if (timeStatus() != timeNotSet) {
+		if (minute() != prevMinuteDisplay) { //update the display only if time has changed
+			prevMinuteDisplay = minute();
+			displayClock();
+		}
+	}
+	yield();
+
+	// read sensors
 	getRadioMessage();
 
 	if (newDataFromNode == -1){ 
@@ -135,6 +161,8 @@ void loop() {
 		delay(1);
 
 		displayData(newDataFromNode);
+
+		//sensorDataCache.dump();
 	 }
 
 	 delay(1);
@@ -221,6 +249,11 @@ void readConfig(WsnReceiverConfig &_cfg){
   _cfg.radioChannel = 101;
   strcpy(_cfg.wifiSsid, "wxIoT");
   strcpy(_cfg.wifiPass,"tXgbYPy6DzYaO-U4");
+
+	strcpy(_cfg.ntpServerName, "time.google.com");
+	_cfg.timeZone = 1;
+	_cfg.localUdpPort = 8760; 
+
   strcpy(_cfg.thingSpeakAPIKeyArr[0],"JXWWMBZMQZNRMOJK");  
   strcpy(_cfg.thingSpeakAPIKeyArr[1],"5LXV4LVUS2D6OEJA");
   strcpy(_cfg.thingSpeakAPIKeyArr[2],"5LXV4LVUS2D6OEJA");
@@ -248,7 +281,7 @@ void readConfig(WsnReceiverConfig &_cfg){
 
 }
 
-void initRadioRx(WsnReceiverConfig _cfg){
+void initRadioRx(WsnReceiverConfig &_cfg){
   radio.begin();
   radio.setChannel(_cfg.radioChannel);    
   radio.setDataRate( RF24_250KBPS );    
@@ -264,16 +297,16 @@ void initRadioRx(WsnReceiverConfig _cfg){
   radio.printDetails();   
 }
 
-void initWifi(WsnReceiverConfig _cfg){
-	 WiFi.mode(WIFI_STA); 
-	 WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
-	 while (WiFi.status() != WL_CONNECTED){
+void initWifi(WsnReceiverConfig &_cfg){
+	WiFi.mode(WIFI_STA); 
+	WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
+	while (WiFi.status() != WL_CONNECTED){
 		Serial.println("Waiting for WIFI connection...");
 		delay(1000);
-	 }
-	 Serial.println("WiFi Connected to SSID.");
-	 printWifiStatus();
-	 yield();
+	}
+	Serial.println("WiFi Connected to SSID.");
+	printWifiStatus();
+	yield();
 }
 
 void readSensor(){
@@ -356,4 +389,10 @@ void displayData(uint8_t nodeID){
 		tft.drawString(sensorDataCache.getTemperature(7), 180, 240, 6);
 		tft.drawString(sensorDataCache.getHumidity(7), 180, 280, 4);
 	}  
+}
+
+void displayClock(){
+	char tftClock[6];
+	sprintf(tftClock, "%u:%02u",hour(),minute());
+	tft.drawString(tftClock, 120, 40, 7);
 }
