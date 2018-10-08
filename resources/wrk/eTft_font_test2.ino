@@ -515,6 +515,53 @@ void drawIcon4(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint1
 }
 
 
+void drawIcon4Fast(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t fgColor, uint16_t bgColor ) {
+  unsigned long mill = millis();  
+
+  uint16_t destColor;
+  uint16_t fgR = ((fgColor >> 10) & 0x3E) + 1;
+  uint16_t fgG = ((fgColor >>  4) & 0x7E) + 1;
+  uint16_t fgB = ((fgColor <<  1) & 0x3E) + 1;
+
+  uint16_t bgR = ((bgColor >> 10) & 0x3E) + 1;
+  uint16_t bgG = ((bgColor >>  4) & 0x7E) + 1;
+  uint16_t bgB = ((bgColor <<  1) & 0x3E) + 1;
+
+  tft.setWindow(x, y, x + width - 1, y + height - 1);
+
+  uint16_t arraySize = width * height / 2;
+  uint8_t alpha;
+  uint16_t destColor;
+  
+  for (int i = 0; i < arraySize; i++) {
+    for (int8_t step = 1; step < 3; step++){
+      if(step == 1){
+        alpha = icon[i] & 0xF0;
+      }
+      else{
+        alpha = icon[i]<<4;
+      }
+      switch(alpha){
+        case 0:
+          destColor = fgColor;
+          break;
+        case 240:
+          destColor = bgColor;
+          break;
+        default:
+          uint16_t r = (((fgR * alpha) + (bgR * (255 - alpha))) >> 9);
+          uint16_t g = (((fgG * alpha) + (bgG * (255 - alpha))) >> 9);
+          uint16_t b = (((fgB * alpha) + (bgB * (255 - alpha))) >> 9);
+          destColor = (r << 11) | (g << 5) | (b << 0); 
+      }  
+      tft.pushColor(destColor);
+    }  
+  }
+  Serial.println(millis()-mill);  
+}
+
+
+
 uint16_t alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
 {
   // For speed use fixed point maths and rounding to permit a power of 2 division
