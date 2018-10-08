@@ -311,6 +311,7 @@ void setup() {
 
 int iconX = 4;
 
+/*
 drawIcon4(radio4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);  
 iconX = iconX + 25;
 drawIcon4(wifi4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
@@ -328,7 +329,26 @@ yield();
 drawIcon4(cloudDown4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
 iconX = iconX + 25;
 yield();
+*/
 
+
+drawIcon4Fast(radio4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);  
+iconX = iconX + 25;
+drawIcon4Fast(wifi4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
+iconX = iconX + 25;
+yield();
+drawIcon4Fast(thermo4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
+iconX = iconX + 25;
+yield();
+drawIcon4Fast(clock4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
+iconX = iconX + 25;
+yield();
+drawIcon4Fast(cloudUp4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
+iconX = iconX + 25;
+yield();
+drawIcon4Fast(cloudDown4, iconX, 0, 24, 24, TFT_DARKGREY, COLOR1);
+iconX = iconX + 25;
+yield();
 
   tft.fillRect(b1x,  b1y, bw, bh, COLOR1);
   tft.fillRect(b2x,  b2y, bw, bh, COLOR2);
@@ -499,7 +519,7 @@ void drawIcon8(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint1
 
 
 void drawIcon4(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t fgColor, uint16_t bgColor ) {
-  unsigned long mill = millis();  
+  unsigned long micro = micros();  
   tft.setWindow(x, y, x + width - 1, y + height - 1);
 
   uint16_t arraySize = width * height / 2;
@@ -511,14 +531,13 @@ void drawIcon4(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint1
     alpha = icon[i]<<4;  
     tft.pushColor(alphaBlend(alpha, fgColor, bgColor));
   }
-  Serial.println(millis()-mill);  
+  Serial.println(micros()-micro);  
 }
 
-
+/*
 void drawIcon4Fast(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t fgColor, uint16_t bgColor ) {
-  unsigned long mill = millis();  
+  unsigned long micro = micros();   
 
-  uint16_t destColor;
   uint16_t fgR = ((fgColor >> 10) & 0x3E) + 1;
   uint16_t fgG = ((fgColor >>  4) & 0x7E) + 1;
   uint16_t fgB = ((fgColor <<  1) & 0x3E) + 1;
@@ -543,10 +562,10 @@ void drawIcon4Fast(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, u
       }
       switch(alpha){
         case 0:
-          destColor = fgColor;
+          destColor = bgColor;
           break;
         case 240:
-          destColor = bgColor;
+          destColor = fgColor;
           break;
         default:
           uint16_t r = (((fgR * alpha) + (bgR * (255 - alpha))) >> 9);
@@ -557,9 +576,60 @@ void drawIcon4Fast(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, u
       tft.pushColor(destColor);
     }  
   }
-  Serial.println(millis()-mill);  
+  Serial.println(micros()-micro);  
 }
+*/
 
+void drawIcon4Fast(const uint8_t icon[], int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t fgColor, uint16_t bgColor ) {
+  unsigned long micro = micros();   
+
+  uint16_t fgR = ((fgColor >> 10) & 0x3E) + 1;
+  uint16_t fgG = ((fgColor >>  4) & 0x7E) + 1;
+  uint16_t fgB = ((fgColor <<  1) & 0x3E) + 1;
+
+  uint16_t bgR = ((bgColor >> 10) & 0x3E) + 1;
+  uint16_t bgG = ((bgColor >>  4) & 0x7E) + 1;
+  uint16_t bgB = ((bgColor <<  1) & 0x3E) + 1;
+
+  tft.setWindow(x, y, x + width - 1, y + height - 1);
+
+  uint8_t alpha;
+
+  uint16_t  pix_buffer[48];   
+  uint16_t  nb = (width * height) / 48;
+ 
+  for (int i = 0; i < nb; i++) {
+    for (int j = 0; j < 24; j++) {
+      for (int8_t step = 0; step < 2; step++){
+        if(step == 0){
+          alpha = icon[i * 24 + j] & 0xF0;
+        }
+        else{
+          alpha = icon[i * 24 + j]<<4;
+        }
+        switch(alpha){
+          case 0:
+            pix_buffer[(j*2)+step] = bgColor;
+            break;
+          case 240:
+            pix_buffer[(j*2)+step] = fgColor;
+            break;
+          default:
+            uint16_t r = (((fgR * alpha) + (bgR * (255 - alpha))) >> 9);
+            uint16_t g = (((fgG * alpha) + (bgG * (255 - alpha))) >> 9);
+            uint16_t b = (((fgB * alpha) + (bgB * (255 - alpha))) >> 9);
+            pix_buffer[(j*2)+step] = (r << 11) | (g << 5) | (b << 0); 
+        }  
+      }
+    }
+    tft.pushColors(pix_buffer, 48);   
+  }
+
+
+
+  
+  Serial.println(micros()-micro);  
+}
 
 
 uint16_t alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
