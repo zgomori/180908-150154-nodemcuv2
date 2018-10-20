@@ -28,6 +28,7 @@
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
 #include "WsnTimer.h"
+#include "WsnGui.h"
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
