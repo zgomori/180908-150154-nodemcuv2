@@ -11,5 +11,6 @@
 
 		public:
 			WsnGui(TFT_eSPI *tft);
+			void drawBackground();
     };    
 #endif

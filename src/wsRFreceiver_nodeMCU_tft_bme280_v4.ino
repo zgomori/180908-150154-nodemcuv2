@@ -73,6 +73,8 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 //XPT2046_Touchscreen touch(TOUCH_CS_PIN);
 
 TFT_eSPI tft = TFT_eSPI();  
+TftUtil tftUtil(&tft);
+WsnGui wsnGUI(&tft); 
 
 WiFiClient client;
 WiFiUDP udp;
@@ -87,6 +89,10 @@ WsnTimer wsnTimer;
 
 char charConvBuffer[10];
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
+
+// remove!!!
+uint16_t colorPalette16[16];
+
 
 time_t getNtpTime(){
 	return ntpClient.getTime();
@@ -123,6 +129,16 @@ void setup() {
 	tft.setTextColor(TFT_DARKGREY,TFT_BLACK);
 
 	tft.setTextDatum(MC_DATUM);
+
+// remove!!!
+	
+	#define COLOR1 0x18C3
+	#define COLOR2 0x10A2
+	
+	wsnGUI.drawBackground();
+	tftUtil.generateColorPalette16(colorPalette16,  TFT_GREEN, COLOR1);
+	tftUtil.drawIcon4(&iconWifi, colorPalette16, 4, 2);
+
 }
 
 void loop() {
@@ -396,5 +412,6 @@ void displayData(uint8_t nodeID){
 void displayClock(){
 	char tftClock[6];
 	sprintf(tftClock, "%u:%02u",hour(),minute());
-	tft.drawString(tftClock, 120, 40, 7);
+	//tft.drawString(tftClock, 120, 40, 7);
+	tft.drawString(tftClock, 120, 60, 7);
 }
