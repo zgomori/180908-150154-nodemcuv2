@@ -11,6 +11,5 @@
 
 		public:
 			WsnGui(TFT_eSPI *tft);
-            void test();
     };    
 #endif
