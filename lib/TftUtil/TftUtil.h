@@ -12,10 +12,12 @@
 	
 	class TftUtil{
 		private:
-            TFT_eSPI *tft;
+         TFT_eSPI *tft;
 
 		public:
-			TftUtil(TFT_eSPI *tft);
+			TftUtil(TFT_eSPI *_tft);
+         TftUtil();
+         void init(TFT_eSPI *_tft);
 			void generateColorPalette16(uint16_t *colorPalette,  uint16_t fgColor, uint16_t bgColor);
 			void drawIcon4(const icon_t *icon, uint16_t *colorPalette, int16_t x, int16_t y);
 			void drawIcon4(const icon_t *icon, uint16_t fgColor, uint16_t bgColor, int16_t x, int16_t y);

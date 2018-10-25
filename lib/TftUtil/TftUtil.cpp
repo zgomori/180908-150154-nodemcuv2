@@ -4,6 +4,14 @@ TftUtil::TftUtil(TFT_eSPI *_tft){
 	this->tft = _tft;
 }
 
+TftUtil::TftUtil(){
+	// call init() after empty constructor;
+}
+
+void TftUtil::init(TFT_eSPI *_tft){
+	this->tft = _tft;
+}
+
 void TftUtil::generateColorPalette16(uint16_t *colorPalette,  uint16_t fgColor, uint16_t bgColor){
 	uint16_t fgR = ((fgColor >> 10) & 0x3E) + 1;
 	uint16_t fgG = ((fgColor >>  4) & 0x7E) + 1;

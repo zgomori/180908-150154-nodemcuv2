@@ -30,6 +30,8 @@
 #include "WsnTimer.h"
 #include "TftUtil.h"
 #include "WsnGui.h"
+#include "WsnSystemStatus.h"
+
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
