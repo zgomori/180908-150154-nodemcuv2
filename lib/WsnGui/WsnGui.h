@@ -4,6 +4,7 @@
    #include "Arduino.h" 
    #include "TFT_eSPI.h"
 	#include "TftUtil.h"
+	#include "WsnSystemStatus.h"
    #include "icons.h"
 
 
@@ -25,5 +26,9 @@
 		public:
          WsnGui(TFT_eSPI *tft);
       	void drawBackground();
+			void drawWifiStatus(bool status);
+			void drawRadioStatus(bool status);
+			void drawSensorStatus(bool status);
+			void refreshStatusBar(WsnSystemStatus &sysStat);
     };    
 #endif

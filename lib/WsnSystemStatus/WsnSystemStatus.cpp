@@ -3,30 +3,28 @@
 WsnSystemStatus::WsnSystemStatus(){
 }
 
-void WsnSystemStatus::set(statusType_enum elem, boolean value){
-	if (!bitRead(this->changeBits,elem)){
-		bitWrite(this->statusBits, elem, value); 
-		bitWrite(this->changeBits, elem, bitRead(this->statusBits, elem) ^ value);
+void WsnSystemStatus::set(statusType_enum elem, bool value){
+	if (!bitRead(changeBits,elem)){
+		if(statusArr[elem] != (uint8_t)value){
+			statusArr[elem] = (uint8_t)value;
+			bitSet(changeBits, elem);
+		}
 	}
 }
 
-boolean WsnSystemStatus::get(statusType_enum elem){
-    return bitRead(this->statusBits, elem);
+bool WsnSystemStatus::get(statusType_enum elem){
+	return (bool)statusArr[elem];
 }
 
-boolean WsnSystemStatus::isChanged(statusType_enum elem){
-	return bitRead(this->changeBits, elem);
-}
-
-uint8_t WsnSystemStatus::getStatusBits(){
-	return this->statusBits;
+bool WsnSystemStatus::isChanged(statusType_enum elem){
+	return bitRead(changeBits, elem);
 }
 
 uint8_t WsnSystemStatus::getChangeBits(){
-	return this->changeBits;
+	return changeBits;
 }
 
 void WsnSystemStatus::resetChangeBits(){
-	this->changeBits = 0;
+	changeBits = 0;
 }
 
