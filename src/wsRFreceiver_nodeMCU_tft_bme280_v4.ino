@@ -137,11 +137,11 @@ void setup() {
 	wsnGUI.drawBackground();
 
 	sysStat.set(sysStat.WIFI, true);
-	sysStat.set(sysStat.RADIO, true);
+	sysStat.set(sysStat.RADIO, false);
 	sysStat.set(sysStat.LOCAL_SENSOR, true);
-	sysStat.set(sysStat.NTP, true);
+	sysStat.set(sysStat.NTP, false);
 	sysStat.set(sysStat.TS_UPDATE, true);
-	sysStat.set(sysStat.TS_GET, true);
+	sysStat.set(sysStat.TS_GET, false);
 	
 	wsnGUI.updateStatusBar(sysStat);
 }

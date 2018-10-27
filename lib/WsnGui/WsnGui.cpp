@@ -40,7 +40,7 @@ void WsnGui::drawThingSpeakUpdateStatus(bool status){
 }
 
 void WsnGui::drawThingSpeakGetStatus(bool status){
-	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 1136, 5);
+	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 136, 5);
 }
 
 void WsnGui::updateStatusBar(WsnSystemStatus &sysStat){
