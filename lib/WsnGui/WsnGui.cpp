@@ -5,8 +5,8 @@ WsnGui::WsnGui(TFT_eSPI *_tft){
 	this->tft = _tft;
 	tftUtil = TftUtil(_tft);
 
-	tftUtil.generateColorPalette16(cpIconNormal, COLOR_ICON_NORMAL, COLOR_BG_STATUSBAR);
-	tftUtil.generateColorPalette16(cpIconError,  COLOR_ICON_ERROR, COLOR_BG_STATUSBAR);
+	tftUtil.generateColorPalette16(COLOR_ICON_NORMAL, COLOR_BG_STATUSBAR, cpIconNormal);
+	tftUtil.generateColorPalette16(COLOR_ICON_ERROR, COLOR_BG_STATUSBAR, cpIconError);
 
 }
 
@@ -31,8 +31,19 @@ void WsnGui::drawSensorStatus(bool status){
 	tftUtil.drawIcon4(&iconSensor, status ? cpIconNormal : cpIconError, 62, 2);
 }
 
+void WsnGui::drawNtpStatus(bool status){
+	tftUtil.drawIcon4(&iconClock, status ? cpIconNormal : cpIconError, 80, 4);
+}
 
-void WsnGui::refreshStatusBar(WsnSystemStatus &sysStat){
+void WsnGui::drawThingSpeakUpdateStatus(bool status){
+	tftUtil.drawIcon4(&iconCloudUp, status ? cpIconNormal : cpIconError, 108, 5);
+}
+
+void WsnGui::drawThingSpeakGetStatus(bool status){
+	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 1136, 5);
+}
+
+void WsnGui::updateStatusBar(WsnSystemStatus &sysStat){
 	if (sysStat.getChangeBits() != 0){
 		if (sysStat.isChanged(sysStat.WIFI)){
 			drawWifiStatus(sysStat.get(sysStat.WIFI));
@@ -42,7 +53,16 @@ void WsnGui::refreshStatusBar(WsnSystemStatus &sysStat){
 		}
 		if (sysStat.isChanged(sysStat.LOCAL_SENSOR)){
 			drawSensorStatus(sysStat.get(sysStat.LOCAL_SENSOR));
+		}
+		if (sysStat.isChanged(sysStat.NTP)){
+			drawNtpStatus(sysStat.get(sysStat.NTP));
 		}		
+		if (sysStat.isChanged(sysStat.TS_UPDATE)){
+			drawThingSpeakUpdateStatus(sysStat.get(sysStat.TS_UPDATE));
+		}
+		if (sysStat.isChanged(sysStat.TS_GET)){
+			drawThingSpeakGetStatus(sysStat.get(sysStat.TS_GET));
+		}
 	}
 
 	sysStat.resetChangeBits();

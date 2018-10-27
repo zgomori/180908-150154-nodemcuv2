@@ -11,8 +11,8 @@
 			enum statusType_enum {
 				WIFI = 0,
 				RADIO = 1,
-				NTP = 2,
-				LOCAL_SENSOR = 3,
+				LOCAL_SENSOR = 2,
+				NTP = 3,
 				TS_UPDATE = 4,
 				TS_GET = 5
 			};

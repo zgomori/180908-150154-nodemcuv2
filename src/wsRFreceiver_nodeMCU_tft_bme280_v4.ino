@@ -77,6 +77,7 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 TFT_eSPI tft = TFT_eSPI();  
 TftUtil tftUtil(&tft);
 WsnGui wsnGUI(&tft); 
+WsnSystemStatus sysStat = WsnSystemStatus();
 
 WiFiClient client;
 WiFiUDP udp;
@@ -132,15 +133,17 @@ void setup() {
 
 	tft.setTextDatum(MC_DATUM);
 
-// remove!!!
-	
-	#define COLOR1 0x18C3
-	#define COLOR2 0x10A2
-	
-	wsnGUI.drawBackground();
-	tftUtil.generateColorPalette16(colorPalette16,  TFT_GREEN, COLOR1);
-	tftUtil.drawIcon4(&iconWifi, colorPalette16, 4, 2);
 
+	wsnGUI.drawBackground();
+
+	sysStat.set(sysStat.WIFI, true);
+	sysStat.set(sysStat.RADIO, true);
+	sysStat.set(sysStat.LOCAL_SENSOR, true);
+	sysStat.set(sysStat.NTP, true);
+	sysStat.set(sysStat.TS_UPDATE, true);
+	sysStat.set(sysStat.TS_GET, true);
+	
+	wsnGUI.updateStatusBar(sysStat);
 }
 
 void loop() {

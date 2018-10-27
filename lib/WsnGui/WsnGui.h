@@ -29,6 +29,9 @@
 			void drawWifiStatus(bool status);
 			void drawRadioStatus(bool status);
 			void drawSensorStatus(bool status);
-			void refreshStatusBar(WsnSystemStatus &sysStat);
+			void drawNtpStatus(bool status);
+			void drawThingSpeakUpdateStatus(bool status);
+			void drawThingSpeakGetStatus(bool status);
+			void updateStatusBar(WsnSystemStatus &sysStat);
     };    
 #endif
