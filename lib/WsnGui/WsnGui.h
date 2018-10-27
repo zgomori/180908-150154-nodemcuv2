@@ -7,7 +7,10 @@
 	#include "WsnSystemStatus.h"
 	#include "WsnSensorDataCache.h"
    #include "icons.h"
-
+	#include <Fonts/Custom/orbitron_light_11_2.h>
+  
+	#define CF_OL32 &Orbitron_Light_32
+	#define CF_ORB11 &orbitron_light11pt7b
 
 	#define COLOR_BG_STATUSBAR 0x18C3
    #define COLOR_BG_CLOCK     0x0000
@@ -34,6 +37,6 @@
 			void drawThingSpeakUpdateStatus(bool status);
 			void drawThingSpeakGetStatus(bool status);
 			void updateStatusBar(WsnSystemStatus &sysStat);
-			void displaySensorData(const uint8_t sensorID, const WsnSensorDataCache &sensorDataCache)
+			void displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache);
     };    
 #endif

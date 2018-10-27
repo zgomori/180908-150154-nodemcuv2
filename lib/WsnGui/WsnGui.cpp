@@ -10,27 +10,6 @@ WsnGui::WsnGui(TFT_eSPI *_tft){
 
 }
 
-void WsnGui::drawBackground(){
-  tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
-  tft->setTextDatum(ML_DATUM);
-
-
-	tft->fillRect(0,		0,		240,	24,	COLOR_BG_STATUSBAR);
-	tft->fillRect(0,		24,	240,	100,	COLOR_BG_CLOCK);	
-
-	tft->fillRect(0,		124,	120,	98,	COLOR_BG_BLOCK1);
-
-
-	tft->fillRect(120,	124,	120,	98,	COLOR_BG_BLOCK2);
-	tft->fillRect(0,		222,	120,	98,	COLOR_BG_BLOCK2);
-	tft->fillRect(120,	222,	120,	98,	COLOR_BG_BLOCK1);
-
-  tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
-  tft->setTextDatum(ML_DATUM);
-  tft.drawString("livingroom", bx+4, by+10, 2);
-
-}
-
 void WsnGui::drawWifiStatus(bool status){
 	tftUtil.drawIcon4(&iconWifi, status ? cpIconNormal : cpIconError, 4, 3);
 }
@@ -80,63 +59,99 @@ void WsnGui::updateStatusBar(WsnSystemStatus &sysStat){
 	sysStat.resetChangeBits();
 }
 
-void WsnGui::displaySensorData(const uint8_t sensorID, const WsnSensorDataCache &sensorDataCache){
-tft.setTextColor(TFT_DARKGREY,COLOR1);
-  tft.setTextDatum(ML_DATUM);
-  tft.drawString("livingroom", bx+4, by+10, 2);
-  
-  tft.setTextDatum(MC_DATUM);  
-  tft.setTextColor(TFT_GREEN,COLOR1);
-  tft.setFreeFont(CF_OL32);
-  tft.drawString("20.1", bx+60, by+35, 1);
- // tft.setFreeFont(CF_OL24);
-  tft.setFreeFont(CF_ORB);
+void WsnGui::drawBackground(){
+	tft->setTextDatum(ML_DATUM);
 
-  tft.drawString("37.0", bx+60, by+70, 1);
+	tft->fillRect(0,		0,		240,	24,	COLOR_BG_STATUSBAR);
+	tft->fillRect(0,		24,	240,	100,	COLOR_BG_CLOCK);	
 
-/*B2********************************************************/  
-  bx = b2x;
-  by = b2y;
+	tft->fillRect(0,		124,	120,	98,	COLOR_BG_BLOCK1);
+	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
+	tft->drawString("livingroom", 4, 134, 2);
 
-  tft.setTextColor(TFT_DARKGREY,COLOR2);
-  tft.setTextDatum(ML_DATUM);
-  tft.drawString("child's room", bx+4, by+10, 2);
-  
-  tft.setTextDatum(MC_DATUM);  
-  tft.setTextColor(TFT_GREEN,COLOR2);  
-  tft.setFreeFont(CF_OL32);
-  tft.drawString("21.1", bx+60, by+35, 1);
-  //tft.setFreeFont(CF_OL24);
-  tft.setFreeFont(CF_ORB);
+	tft->fillRect(120,	124,	120,	98,	COLOR_BG_BLOCK2);
+	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK2);
+	tft->drawString("child's room", 124, 134, 2);
 
-  tft.drawString("56.8", bx+60, by+70, 1);
+	tft->fillRect(0,		222,	120,	98,	COLOR_BG_BLOCK2);
+	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK2);
+	tft->drawString("outdoor", 4, 232, 2);
 
-/*B3********************************************************/  
-  bx = b3x;
-  by = b3y;
+	tft->fillRect(120,	222,	120,	98,	COLOR_BG_BLOCK1);
+	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
+	tft->drawString("atm.pressure", 124, 232, 2);
 
-  tft.setTextColor(TFT_DARKGREY,COLOR2);
-  tft.setTextDatum(ML_DATUM);
-  tft.drawString("outdoor", bx+4, by+10, 2);
-  
-  tft.setTextDatum(MC_DATUM);  
-  tft.setTextColor(TFT_GREEN,COLOR2);
-  tft.setFreeFont(CF_OL32);
-  tft.drawString("-5.5", bx+60, by+35, 1);
-  tft.setFreeFont(CF_OL24);
-  tft.drawString("13.8", bx+60, by+70, 1);
+}
 
-/*B4********************************************************/ 
-  bx = b4x;
-  by = b4y;
+void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache){
+	tft->setTextPadding(100);
+	switch (sensorID){
+		case 0 :
+			tft->setTextDatum(MC_DATUM);  
+			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK1);
+			tft->setFreeFont(CF_OL32);
+			tft->drawString(sensorDataCache.getTemperature(0), 60, 159, 1);
+			tft->setFreeFont(CF_ORB11);
+			tft->drawString(sensorDataCache.getHumidity(0), 60, 194, 1);
 
-  tft.setTextColor(TFT_DARKGREY,COLOR1);
-  tft.setTextDatum(ML_DATUM);
-  tft.drawString("atm.pressure", bx+4, by+10, 2);
-  
-  tft.setTextDatum(MC_DATUM);
-  tft.setTextColor(TFT_GREEN,COLOR1);
-  tft.setFreeFont(CF_OL24);
-  tft.drawString("1015", bx+60, by+34, 1);
+			tft->drawString(sensorDataCache.getPressure(0), 180, 257, 1);
+			break;
 
+		case 6 :
+			tft->setTextDatum(MC_DATUM);  
+			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK2);  
+			tft->setFreeFont(CF_OL32);
+			tft->drawString(sensorDataCache.getTemperature(6), 180, 159, 1);
+			tft->setFreeFont(CF_ORB11);
+			tft->drawString(sensorDataCache.getHumidity(6), 180, 194, 1);
+			break;
+
+		case 1 :
+			tft->setTextDatum(MC_DATUM);  
+			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK2);
+			tft->setFreeFont(CF_OL32);
+			tft->drawString(sensorDataCache.getTemperature(1), 60, 257, 1);
+			tft->setFreeFont(CF_ORB11);
+			tft->drawString(sensorDataCache.getHumidity(1), 60, 292, 1);
+			break;
+	}
+	tft->setTextPadding(0);
+
+/*
+	//B2********************************************************  
+	bx = b2x;
+	by = b2y;
+
+
+	tft.setTextDatum(MC_DATUM);  
+	tft.setTextColor(TFT_GREEN,COLOR2);  
+	tft.setFreeFont(CF_OL32);
+	tft.drawString("21.1", bx+60, by+35, 1);
+	//tft.setFreeFont(CF_OL24);
+	tft.setFreeFont(CF_ORB);
+
+	tft.drawString("56.8", bx+60, by+70, 1);
+
+	//B3********************************************************
+	bx = b3x;
+	by = b3y;
+
+
+	tft.setTextDatum(MC_DATUM);  
+	tft.setTextColor(TFT_GREEN,COLOR2);
+	tft.setFreeFont(CF_OL32);
+	tft.drawString("-5.5", bx+60, by+35, 1);
+	tft.setFreeFont(CF_OL24);
+	tft.drawString("13.8", bx+60, by+70, 1);
+
+	//B4******************************************************** 
+	bx = b4x;
+	by = b4y;
+
+
+	tft.setTextDatum(MC_DATUM);
+	tft.setTextColor(TFT_GREEN,COLOR1);
+	tft.setFreeFont(CF_OL24);
+	tft.drawString("1015", bx+60, by+34, 1);
+*/
 }

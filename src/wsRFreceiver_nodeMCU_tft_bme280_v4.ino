@@ -183,8 +183,8 @@ void loop() {
 		}
 		delay(1);
 
-		displayData(newDataFromNode);
-
+		//displayData(newDataFromNode);
+		wsnGUI.displaySensorData(newDataFromNode, sensorDataCache);
 		//sensorDataCache.dump();
 	 }
 
@@ -417,6 +417,8 @@ void displayData(uint8_t nodeID){
 void displayClock(){
 	char tftClock[6];
 	sprintf(tftClock, "%u:%02u",hour(),minute());
-	//tft.drawString(tftClock, 120, 40, 7);
+// REMOVE HERE !!!
+ 	tft.setTextColor(TFT_GREEN,TFT_BLACK);
+	tft.setTextDatum(MC_DATUM);  
 	tft.drawString(tftClock, 120, 60, 7);
 }
