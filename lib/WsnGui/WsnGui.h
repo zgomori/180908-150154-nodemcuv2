@@ -5,6 +5,7 @@
    #include "TFT_eSPI.h"
 	#include "TftUtil.h"
 	#include "WsnSystemStatus.h"
+	#include "WsnSensorDataCache.h"
    #include "icons.h"
 
 
@@ -33,5 +34,6 @@
 			void drawThingSpeakUpdateStatus(bool status);
 			void drawThingSpeakGetStatus(bool status);
 			void updateStatusBar(WsnSystemStatus &sysStat);
+			void displaySensorData(const uint8_t sensorID, const WsnSensorDataCache &sensorDataCache)
     };    
 #endif
