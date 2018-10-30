@@ -84,9 +84,11 @@ void WsnGui::drawBackground(){
 }
 
 void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache){
+	uint32_t m;
 	tft->setTextPadding(100);
 	switch (sensorID){
 		case 0 :
+			m = millis();
 			tft->setTextDatum(MC_DATUM);  
 			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK1);
 			tft->setFreeFont(CF_OL32);
@@ -95,24 +97,39 @@ void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensor
 			tft->drawString(sensorDataCache.getHumidity(0), 60, 194, 1);
 
 			tft->drawString(sensorDataCache.getPressure(0), 180, 257, 1);
+			Serial.println("@@@@");
+			Serial.println(millis()-m);
+			Serial.println(sensorID);
+			Serial.println("@@@@");
 			break;
 
 		case 6 :
+			m = millis();
 			tft->setTextDatum(MC_DATUM);  
 			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK2);  
 			tft->setFreeFont(CF_OL32);
 			tft->drawString(sensorDataCache.getTemperature(6), 180, 159, 1);
 			tft->setFreeFont(CF_ORB11);
 			tft->drawString(sensorDataCache.getHumidity(6), 180, 194, 1);
+			Serial.println("@@@@");
+			Serial.println(millis()-m);
+			Serial.println(sensorID);
+			Serial.println("@@@@");
 			break;
 
 		case 1 :
+			m = millis();
 			tft->setTextDatum(MC_DATUM);  
 			tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK2);
 			tft->setFreeFont(CF_OL32);
 			tft->drawString(sensorDataCache.getTemperature(1), 60, 257, 1);
 			tft->setFreeFont(CF_ORB11);
 			tft->drawString(sensorDataCache.getHumidity(1), 60, 292, 1);
+			Serial.println("@@@@");
+			Serial.println(millis()-m);
+			Serial.println(sensorID);
+			Serial.println("@@@@");
+
 			break;
 	}
 	tft->setTextPadding(0);

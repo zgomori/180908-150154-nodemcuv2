@@ -337,6 +337,7 @@ void readSensor(){
   WsnSensorNodeMessage _sensorNodeMessage;
   localSensorMessageCnt++;
   bme.takeForcedMeasurement();
+  delay(10);
 
   _sensorNodeMessage.nodeID = 0;
   _sensorNodeMessage.sensorSet = cfg.sensorSet;
