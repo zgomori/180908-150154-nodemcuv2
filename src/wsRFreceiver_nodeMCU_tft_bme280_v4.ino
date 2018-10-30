@@ -28,6 +28,10 @@
 #include "thingSpeakUtil.h"
 #include "WsnSensorDataCache.h"
 #include "WsnTimer.h"
+#include "TftUtil.h"
+#include "WsnGui.h"
+#include "WsnSystemStatus.h"
+
 
 #define RADIO_CE_PIN   D3
 #define RADIO_CSN_PIN  D0
@@ -71,6 +75,9 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 //XPT2046_Touchscreen touch(TOUCH_CS_PIN);
 
 TFT_eSPI tft = TFT_eSPI();  
+TftUtil tftUtil(&tft);
+WsnGui wsnGUI(&tft); 
+WsnSystemStatus sysStat = WsnSystemStatus();
 
 WiFiClient client;
 WiFiUDP udp;
@@ -85,6 +92,10 @@ WsnTimer wsnTimer;
 
 char charConvBuffer[10];
 ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
+
+// remove!!!
+uint16_t colorPalette16[16];
+
 
 time_t getNtpTime(){
 	return ntpClient.getTime();
@@ -121,6 +132,18 @@ void setup() {
 	tft.setTextColor(TFT_DARKGREY,TFT_BLACK);
 
 	tft.setTextDatum(MC_DATUM);
+
+
+	wsnGUI.drawBackground();
+
+	sysStat.set(sysStat.WIFI, true);
+	sysStat.set(sysStat.RADIO, false);
+	sysStat.set(sysStat.LOCAL_SENSOR, true);
+	sysStat.set(sysStat.NTP, false);
+	sysStat.set(sysStat.TS_UPDATE, true);
+	sysStat.set(sysStat.TS_GET, false);
+	
+	wsnGUI.updateStatusBar(sysStat);
 }
 
 void loop() {
@@ -160,8 +183,8 @@ void loop() {
 		}
 		delay(1);
 
-		displayData(newDataFromNode);
-
+		//displayData(newDataFromNode);
+		wsnGUI.displaySensorData(newDataFromNode, sensorDataCache);
 		//sensorDataCache.dump();
 	 }
 
@@ -394,5 +417,8 @@ void displayData(uint8_t nodeID){
 void displayClock(){
 	char tftClock[6];
 	sprintf(tftClock, "%u:%02u",hour(),minute());
-	tft.drawString(tftClock, 120, 40, 7);
+// REMOVE HERE !!!
+ 	tft.setTextColor(TFT_GREEN,TFT_BLACK);
+	tft.setTextDatum(MC_DATUM);  
+	tft.drawString(tftClock, 120, 60, 7);
 }
