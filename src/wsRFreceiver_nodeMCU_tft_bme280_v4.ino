@@ -77,7 +77,7 @@ RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 TFT_eSPI tft = TFT_eSPI();  
 TftUtil tftUtil(&tft);
 WsnGui wsnGUI(&tft); 
-WsnSystemStatus sysStat = WsnSystemStatus();
+WsnSystemStatus sysStatus = WsnSystemStatus();
 
 WiFiClient client;
 WiFiUDP udp;
@@ -91,14 +91,16 @@ WsnSensorDataCache sensorDataCache;
 WsnTimer wsnTimer;
 
 char charConvBuffer[10];
-ThingSpeakUtil tsUtil(client, cfg.thingSpeakAddress);
+ThingSpeakUtil tsUtil(&client, cfg.thingSpeakAddress);
 
 // remove!!!
 uint16_t colorPalette16[16];
 
 
 time_t getNtpTime(){
-	return ntpClient.getTime();
+	time_t ret = ntpClient.getTime();
+	sysStatus.set(sysStatus.NTP, ret == 0 ? false : true); 
+	// return ntpClient.getTime();
 }
 /*************************- S E T U P -*****************************************/
 void setup() {
@@ -136,14 +138,14 @@ void setup() {
 
 	wsnGUI.drawBackground();
 
-	sysStat.set(sysStat.WIFI, true);
-	sysStat.set(sysStat.RADIO, false);
-	sysStat.set(sysStat.LOCAL_SENSOR, true);
-	sysStat.set(sysStat.NTP, false);
-	sysStat.set(sysStat.TS_UPDATE, true);
-	sysStat.set(sysStat.TS_GET, false);
+	sysStatus.set(sysStatus.WIFI, true);
+	sysStatus.set(sysStatus.RADIO, false);
+	sysStatus.set(sysStatus.LOCAL_SENSOR, true);
+	sysStatus.set(sysStatus.NTP, false);
+	sysStatus.set(sysStatus.TS_UPDATE, true);
+	sysStatus.set(sysStatus.TS_GET, false);
 	
-	wsnGUI.updateStatusBar(sysStat);
+	wsnGUI.updateStatusBar(sysStatus, true);
 }
 
 void loop() {
@@ -179,7 +181,8 @@ void loop() {
 			Serial.println("Update ThingSpeak");
 			char updateParams[80] = "\0";
 			sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
-			tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
+			bool tsUpdateStat = tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
+			sysStatus.set(sysStatus.TS_UPDATE, tsUpdateStat);
 		}
 		delay(1);
 
@@ -237,8 +240,13 @@ void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
 		char jsonResponse[255];
 		char* readApiKey = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey;
 		char* channel = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel;
-		if(tsUtil.get(readApiKey, channel, jsonResponse)){
+		bool tsGetStatus = tsUtil.get(readApiKey, channel, jsonResponse); 
+		if(tsGetStatus){
 			sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
+			sysStatus.set(sysStatus.TS_GET, true);
+		}
+		else{
+			sysStatus.set(sysStatus.TS_GET, false);	
 		}
 		delay(100);
 	}

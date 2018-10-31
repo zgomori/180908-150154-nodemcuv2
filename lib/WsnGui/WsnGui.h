@@ -36,7 +36,7 @@
 			void drawNtpStatus(bool status);
 			void drawThingSpeakUpdateStatus(bool status);
 			void drawThingSpeakGetStatus(bool status);
-			void updateStatusBar(WsnSystemStatus &sysStat);
+			void updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus);
 			void displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache);
     };    
 #endif
