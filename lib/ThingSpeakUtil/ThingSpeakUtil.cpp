@@ -1,7 +1,7 @@
 #include "ThingSpeakUtil.h"
 
 ThingSpeakUtil::ThingSpeakUtil(WiFiClient *wifiClient, char* thingSpeakAddress){
-	*wifiClient = *client;
+	client = wifiClient;
 	this->thingSpeakAddress = thingSpeakAddress;
 }
 

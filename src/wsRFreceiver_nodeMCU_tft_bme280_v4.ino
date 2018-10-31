@@ -90,25 +90,28 @@ WsnReceiverConfig cfg;
 WsnSensorDataCache sensorDataCache; 
 WsnTimer wsnTimer;
 
-char charConvBuffer[10];
 ThingSpeakUtil tsUtil(&client, cfg.thingSpeakAddress);
-
-// remove!!!
-uint16_t colorPalette16[16];
 
 
 time_t getNtpTime(){
 	time_t ret = ntpClient.getTime();
-	sysStatus.set(sysStatus.NTP, ret == 0 ? false : true); 
-	// return ntpClient.getTime();
+	sysStatus.set(sysStatus.NTP, (ret == 0 ? false : true)); 
+	return ret;
 }
 /*************************- S E T U P -*****************************************/
 void setup() {
 	Serial.begin(115200);
 	delay(100);
-	Serial.println("Weather Sensor Network receiver starting");
+	Serial.println("starting Weather Sensor Network receiver");
+
+	tft.begin();
+	tft.setRotation(0);
+  	wsnGUI.drawBackground();
+
 
 	readConfig(cfg);
+
+
 
 	initWifi(cfg);
 
@@ -123,21 +126,11 @@ void setup() {
 	wsnTimer.init(cfg);
 	wsnTimer.setTriggerFunction(timerTrigger);
 
-	tft.begin();
-	tft.setRotation(0);
-  
+
 	//  touch.begin();  // Must be done before setting rotation
 	//  touch.setRotation(0);
 
-	tft.fillScreen(TFT_BLACK);
-//	tft.setTextColor(TFT_GREEN,TFT_BLACK);
-	tft.setTextColor(TFT_DARKGREY,TFT_BLACK);
-
-	tft.setTextDatum(MC_DATUM);
-
-
-	wsnGUI.drawBackground();
-
+/*
 	sysStatus.set(sysStatus.WIFI, true);
 	sysStatus.set(sysStatus.RADIO, false);
 	sysStatus.set(sysStatus.LOCAL_SENSOR, true);
@@ -146,6 +139,7 @@ void setup() {
 	sysStatus.set(sysStatus.TS_GET, false);
 	
 	wsnGUI.updateStatusBar(sysStatus, true);
+*/
 }
 
 void loop() {
@@ -185,11 +179,15 @@ void loop() {
 			sysStatus.set(sysStatus.TS_UPDATE, tsUpdateStat);
 		}
 		delay(1);
+	 }
 
+	// refresh data on TFT screen
+	if (newDataFromNode > -1){
 		//displayData(newDataFromNode);
 		wsnGUI.displaySensorData(newDataFromNode, sensorDataCache);
+		wsnGUI.updateStatusBar(sysStatus, true);
 		//sensorDataCache.dump();
-	 }
+	}
 
 	 delay(1);
 
@@ -211,6 +209,7 @@ void getRadioMessage() {
 		if(sensorNodeMessage.nodeID == rfPipeNum){
 			newDataFromNode = sensorNodeMessage.nodeID;
 			sensorDataCache.add(sensorNodeMessage);
+			sysStatus.set(sysStatus.RADIO, true);
 
 			Serial.println(F("----------------------------"));
 			Serial.print(F("Message received from node "));
@@ -218,6 +217,7 @@ void getRadioMessage() {
 			Serial.println(F("----------------------------"));
 		}
 		else{  
+			sysStatus.set(sysStatus.RADIO, false);
 			Serial.print(F("[ERROR] getRadioMessage: PipeNumber != nodeID "));
 			Serial.print(F("PipeNumber: "));
 			Serial.print(rfPipeNum);
@@ -228,13 +228,15 @@ void getRadioMessage() {
 }
 
 void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
+	bool sensorReadStatus; 
 	Serial.println("-----------------------");
 	Serial.print("TRIGGER FIRED ");
 	Serial.println(nodeID);
 	Serial.println("-----------------------");
 
 	if (nodeID == 0){
-		readSensor();
+		sensorReadStatus = readLocalBME280();
+		sysStatus.set(sysStatus.LOCAL_SENSOR, sensorReadStatus);
 	}
 	else{
 		char jsonResponse[255];
@@ -340,24 +342,31 @@ void initWifi(WsnReceiverConfig &_cfg){
 	yield();
 }
 
-void readSensor(){
-  delay(1);
-  WsnSensorNodeMessage _sensorNodeMessage;
-  localSensorMessageCnt++;
-  bme.takeForcedMeasurement();
-  delay(10);
+bool readLocalBME280(){
+	delay(1);
+	WsnSensorNodeMessage _sensorNodeMessage;
+	localSensorMessageCnt++;
+	bme.takeForcedMeasurement();
+	delay(10);
 
-  _sensorNodeMessage.nodeID = 0;
-  _sensorNodeMessage.sensorSet = cfg.sensorSet;
-  _sensorNodeMessage.temperature = bme.readTemperature();
-  _sensorNodeMessage.pressure = (bme.readPressure() / 100.0F) + (1.2 * (cfg.elevation/10));
-  _sensorNodeMessage.humidity = bme.readHumidity();
-  _sensorNodeMessage.batteryVoltage = 0;
-  _sensorNodeMessage.messageCnt = localSensorMessageCnt;
+	float temp = bme.readTemperature();
+	float pressure = (bme.readPressure() / 100.0F) + (1.2 * (cfg.elevation/10));
+	float humidity = bme.readHumidity();
 
-  sensorDataCache.add(_sensorNodeMessage);
+	if ((temp == 0.0) && (pressure = 0.0) && (humidity = 0.0)){
+		return false;
+	} 
+	_sensorNodeMessage.nodeID = 0;
+	_sensorNodeMessage.sensorSet = cfg.sensorSet;
+	_sensorNodeMessage.temperature = temp;
+	_sensorNodeMessage.pressure = pressure;
+	_sensorNodeMessage.humidity = humidity;
+	_sensorNodeMessage.batteryVoltage = 0;
+	_sensorNodeMessage.messageCnt = localSensorMessageCnt;
 
-  delay(1);
+	sensorDataCache.add(_sensorNodeMessage);
+
+	return true;
 }      
 
 
