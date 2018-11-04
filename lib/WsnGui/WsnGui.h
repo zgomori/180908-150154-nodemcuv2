@@ -38,5 +38,6 @@
 			void drawThingSpeakGetStatus(bool status);
 			void updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus);
 			void displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache);
+			void displayClock(int hour, int minute);
     };    
 #endif

@@ -104,7 +104,7 @@
         dst[i] = 0;
       }
   }
-
+/*
   void WsnSensorDataCache::dump(){
     Serial.println(F("================SensorDataCache dump================"));
     Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV    MsgCnt"));
@@ -116,3 +116,35 @@
     }
     Serial.println(F("============End of SensorDataCache dump============="));
   }
+*/
+
+
+	void WsnSensorDataCache::printDumpHeader(){
+		Serial.println(F("================SensorDataCache dump================"));
+		Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV    MsgCnt"));
+	}
+
+	void WsnSensorDataCache::printDumpFooter(){
+		Serial.println(F("============End of SensorDataCache dump============="));
+	}
+
+	void WsnSensorDataCache::printDumpRow(int8_t nodeID){
+		char buff[64];
+		sprintf(buff, "%2u%10s%10s%10s%10s%10s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID));
+		Serial.println(buff);
+		yield();
+	}
+
+	void WsnSensorDataCache::printData(int8_t nodeID){
+		printDumpHeader();
+		printDumpRow(nodeID);
+		printDumpFooter();
+	}
+
+	void WsnSensorDataCache::dump(){
+		printDumpHeader();
+		for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
+			printDumpRow(i);
+		}	
+		printDumpFooter();
+	}

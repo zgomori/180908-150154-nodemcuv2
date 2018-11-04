@@ -24,7 +24,10 @@
 			WsnSensorNodeData sensorCacheArr[10];
 			void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst);
 			void setValueByIndex(uint8_t nodeID, uint8_t idx, char* value);
-
+			void printDumpHeader();
+			void printDumpFooter();
+			void printDumpRow(int8_t nodeID);
+			
 		public:
 			WsnSensorDataCache();
 			void add(WsnSensorNodeMessage &sensorNodeMessage);
@@ -37,6 +40,7 @@
 			byte getSensorSet(uint8_t nodeID);
 			char* getValueByIndex(uint8_t nodeID, uint8_t idx);
 			void createThingSpeakParam(uint8_t nodeID, char* dst);
+			void printData(int8_t nodeID);
 			void dump();
     };    
 #endif
