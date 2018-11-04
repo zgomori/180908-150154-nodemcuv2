@@ -14,6 +14,7 @@ void WsnTimer::init(WsnReceiverConfig &cfg){
 		timerArr[i+1].frequencyMs = cfg.tsNodeConfigArr[i].readFrequencyMs;
 		timerArr[i+1].lastFireMillis = 0;
 	}
+	checkMillis = millis();
 }
 
 void WsnTimer::setTriggerFunction(TriggerFunction tf){
@@ -21,18 +22,23 @@ void WsnTimer::setTriggerFunction(TriggerFunction tf){
 }	
 
 void WsnTimer::ticker(){
-	uint32_t ms = millis();
-	for(uint8_t i = 0; i < 5; i++ ){
-		if (timerArr[i].nodeID == -1){
-			break;
+	if (checkMillis + WSN_TIMER_CHECK_PERIOD <= millis()){
+		checkMillis = millis();
+		Serial.println("++++10 sec");
+
+		uint32_t ms = millis();
+		for(uint8_t i = 0; i < 5; i++ ){
+			if (timerArr[i].nodeID == -1){
+				break;
+			}
+			if(timerArr[i].lastFireMillis + timerArr[i].frequencyMs <= ms){
+				timerArr[i].lastFireMillis = ms;
+				yield();
+				triggerFunction(timerArr[i].nodeID, timerArr[i].tsNodeConfigIdx);
+				yield();	
+				break;
+			} 
 		}
-		if(timerArr[i].lastFireMillis + timerArr[i].frequencyMs <= ms){
-			timerArr[i].lastFireMillis = ms;
-			yield();
-			triggerFunction(timerArr[i].nodeID, timerArr[i].tsNodeConfigIdx);
-			yield();	
-			break;
-		} 
-	}		
+	}			
 }
 

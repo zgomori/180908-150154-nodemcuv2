@@ -34,29 +34,31 @@ void WsnGui::drawThingSpeakGetStatus(bool status){
 	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 136, 5);
 }
 
-void WsnGui::updateStatusBar(WsnSystemStatus &sysStat){
-	if (sysStat.getChangeBits() != 0){
-		if (sysStat.isChanged(sysStat.WIFI)){
-			drawWifiStatus(sysStat.get(sysStat.WIFI));
+void WsnGui::updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus){
+	if (sysStatus.getChangeBits() != 0){
+		if (sysStatus.isChanged(sysStatus.WIFI)){
+			drawWifiStatus(sysStatus.get(sysStatus.WIFI));
 		}
-		if (sysStat.isChanged(sysStat.RADIO)){
-			drawRadioStatus(sysStat.get(sysStat.RADIO));
+		if (sysStatus.isChanged(sysStatus.RADIO)){
+			drawRadioStatus(sysStatus.get(sysStatus.RADIO));
 		}
-		if (sysStat.isChanged(sysStat.LOCAL_SENSOR)){
-			drawSensorStatus(sysStat.get(sysStat.LOCAL_SENSOR));
+		if (sysStatus.isChanged(sysStatus.LOCAL_SENSOR)){
+			drawSensorStatus(sysStatus.get(sysStatus.LOCAL_SENSOR));
 		}
-		if (sysStat.isChanged(sysStat.NTP)){
-			drawNtpStatus(sysStat.get(sysStat.NTP));
+		if (sysStatus.isChanged(sysStatus.NTP)){
+			drawNtpStatus(sysStatus.get(sysStatus.NTP));
 		}		
-		if (sysStat.isChanged(sysStat.TS_UPDATE)){
-			drawThingSpeakUpdateStatus(sysStat.get(sysStat.TS_UPDATE));
+		if (sysStatus.isChanged(sysStatus.TS_UPDATE)){
+			drawThingSpeakUpdateStatus(sysStatus.get(sysStatus.TS_UPDATE));
 		}
-		if (sysStat.isChanged(sysStat.TS_GET)){
-			drawThingSpeakGetStatus(sysStat.get(sysStat.TS_GET));
+		if (sysStatus.isChanged(sysStatus.TS_GET)){
+			drawThingSpeakGetStatus(sysStatus.get(sysStatus.TS_GET));
 		}
 	}
 
-	sysStat.resetChangeBits();
+	if (resetStatus){
+		sysStatus.resetChangeBits();
+	}	
 }
 
 void WsnGui::drawBackground(){
@@ -113,6 +115,7 @@ void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensor
 			tft->drawString(sensorDataCache.getTemperature(1), 60, 257, 1);
 			tft->setFreeFont(CF_ORB11);
 			tft->drawString(sensorDataCache.getHumidity(1), 60, 292, 1);
+
 			break;
 	}
 	tft->setTextPadding(0);
@@ -154,4 +157,12 @@ void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensor
 	tft.setFreeFont(CF_OL24);
 	tft.drawString("1015", bx+60, by+34, 1);
 */
+}
+
+void WsnGui::displayClock(int hour, int minute){
+	char tftClock[6];
+	sprintf(tftClock, "%u:%02u", hour, minute);
+ 	tft->setTextColor(TFT_GREEN,TFT_BLACK);
+	tft->setTextDatum(MC_DATUM);  
+	tft->drawString(tftClock, 120, 60, 7);
 }

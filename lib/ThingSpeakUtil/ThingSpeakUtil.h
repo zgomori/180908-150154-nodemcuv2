@@ -5,12 +5,12 @@
 
 	class ThingSpeakUtil{
 		private:
-			WiFiClient client; 
+			WiFiClient *client; 
 			char* thingSpeakAddress;
 		public:
-			ThingSpeakUtil(WiFiClient client, char* thingSpeakAddress);
-			boolean update(char* apiKey, char* params);
-			boolean get(char* apiKey, char* channel, char* json);
+			ThingSpeakUtil(WiFiClient *wifiClient, char* thingSpeakAddress);
+			bool update(char* apiKey, char* params);
+			bool get(char* apiKey, char* channel, char* json);
 	};
 
 #endif // WS_DISPLAY_H
