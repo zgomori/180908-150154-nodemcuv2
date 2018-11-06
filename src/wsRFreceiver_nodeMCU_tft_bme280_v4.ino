@@ -54,6 +54,9 @@ Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
 TFT_eSPI tft = TFT_eSPI();  
+uint16_t touchCalibrateData[5] =  { 213, 3571, 377, 3516, 4 };
+uint32_t touchedMillis = millis();
+
 TftUtil tftUtil(&tft);
 WsnGui wsnGUI(&tft); 
 WsnSystemStatus sysStatus = WsnSystemStatus();
@@ -64,7 +67,6 @@ NTPclient ntpClient;
 
 WsnReceiverConfig cfg;
 
-//uint32_t touchedMillis = millis();
 
 WsnSensorDataCache sensorDataCache; 
 WsnTimer wsnTimer;
@@ -95,7 +97,9 @@ void setup() {
 
 	tft.begin();
 	tft.setRotation(0);
-  	wsnGUI.drawBackground();
+	tft.setTouch(touchCalibrateData);
+  	
+	wsnGUI.drawBackground();
 
 	readConfig(cfg);
 
@@ -172,13 +176,17 @@ void loop() {
 
 	 delay(1);
 
-/*
-	 if (touch.touched() && (millis() - touchedMillis > 500)) {
-		TS_Point p = touch.getPoint();
-		Serial.print("x ="); Serial.print(p.x); Serial.print(" y ="); Serial.println(p.y);
-		touchedMillis = millis();
-	 }
- */   
+	// touch handler
+	uint16_t touchX = 0, touchY = 0; 
+	if (tft.getTouch(&touchX, &touchY) && (millis() - touchedMillis > 500)) {
+		touchedMillis = millis(); 
+		tft.fillCircle(touchX, touchY, 2, TFT_WHITE);
+		Serial.print("x,y = ");
+		Serial.print(touchX);
+		Serial.print(",");
+		Serial.println(touchY);
+	}
+
 }
 
 
