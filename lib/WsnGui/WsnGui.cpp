@@ -35,28 +35,40 @@ void WsnGui::switchScreen(uint8_t screenId){
 	
 }
 
-void WsnGui::drawWifiStatus(bool status){
-	tftUtil.drawIcon4(&iconWifi, status ? cpIconNormal : cpIconError, 4, 3);
+void WsnGui::drawWifiStatus(Boolean_t status){
+	if (status.isNotNull()){
+		tftUtil.drawIcon4(&iconWifi, status.isTrue() ? cpIconNormal : cpIconError, 4, 3);
+	}	
 }
 
-void WsnGui::drawRadioStatus(bool status){
-	tftUtil.drawIcon4(&iconRadio, status ? cpIconNormal : cpIconError, 34, 2);
+void WsnGui::drawRadioStatus(Boolean_t status){
+	if (status.isNotNull()){
+		tftUtil.drawIcon4(&iconRadio, status.isTrue() ? cpIconNormal : cpIconError, 34, 2);
+	}	
 }
 
-void WsnGui::drawSensorStatus(bool status){
-	tftUtil.drawIcon4(&iconSensor, status ? cpIconNormal : cpIconError, 62, 2);
+void WsnGui::drawSensorStatus(Boolean_t status){
+	if (status.isNotNull()){	
+		tftUtil.drawIcon4(&iconSensor, status.isTrue() ? cpIconNormal : cpIconError, 62, 2);
+	}	
 }
 
-void WsnGui::drawNtpStatus(bool status){
-	tftUtil.drawIcon4(&iconClock, status ? cpIconNormal : cpIconError, 80, 4);
+void WsnGui::drawNtpStatus(Boolean_t status){
+	if (status.isNotNull()){	
+		tftUtil.drawIcon4(&iconClock, status.isTrue() ? cpIconNormal : cpIconError, 80, 4);
+	}	
 }
 
-void WsnGui::drawThingSpeakUpdateStatus(bool status){
-	tftUtil.drawIcon4(&iconCloudUp, status ? cpIconNormal : cpIconError, 108, 5);
+void WsnGui::drawThingSpeakUpdateStatus(Boolean_t status){
+	if (status.isNotNull()){	
+		tftUtil.drawIcon4(&iconCloudUp, status.isTrue() ? cpIconNormal : cpIconError, 108, 5);
+	}
 }
 
-void WsnGui::drawThingSpeakGetStatus(bool status){
-	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 136, 5);
+void WsnGui::drawThingSpeakGetStatus(Boolean_t status){
+	if (status.isNotNull()){	
+		tftUtil.drawIcon4(&iconCloudDown, status.isTrue() ? cpIconNormal : cpIconError, 136, 5);
+	}
 }
 
 void WsnGui::updateStatusBar(bool resetStatus){
@@ -87,24 +99,12 @@ void WsnGui::updateStatusBar(bool resetStatus){
 }
 
 void WsnGui::redrawStatusBar(){
-	if (sysStatus.getInt(sysStatus.WIFI) != -1){
-		drawWifiStatus(sysStatus.get(sysStatus.WIFI));
-	}
-	if (sysStatus.getInt(sysStatus.RADIO) != -1){
-		drawRadioStatus(sysStatus.get(sysStatus.RADIO));
-	}
-	if (sysStatus.getInt(sysStatus.LOCAL_SENSOR) != -1){
-		drawSensorStatus(sysStatus.get(sysStatus.LOCAL_SENSOR));
-	}
-	if (sysStatus.getInt(sysStatus.NTP) != -1){
-		drawNtpStatus(sysStatus.get(sysStatus.NTP));
-	}		
-	if (sysStatus.getInt(sysStatus.TS_UPDATE) != -1){
-		drawThingSpeakUpdateStatus(sysStatus.get(sysStatus.TS_UPDATE));
-	}
-	if (sysStatus.getInt(sysStatus.TS_GET) != -1){
-		drawThingSpeakGetStatus(sysStatus.get(sysStatus.TS_GET));
-	}
+	drawWifiStatus(sysStatus.get(sysStatus.WIFI));
+	drawRadioStatus(sysStatus.get(sysStatus.RADIO));
+	drawSensorStatus(sysStatus.get(sysStatus.LOCAL_SENSOR));
+	drawNtpStatus(sysStatus.get(sysStatus.NTP));
+	drawThingSpeakUpdateStatus(sysStatus.get(sysStatus.TS_UPDATE));
+	drawThingSpeakGetStatus(sysStatus.get(sysStatus.TS_GET));
 }
 
 

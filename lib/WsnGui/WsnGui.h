@@ -47,12 +47,12 @@
 			uint8_t getCurrentScreenId();
 			void switchScreen(uint8_t screenId);
       	void initMainScreen();
-			void drawWifiStatus(bool status);
-			void drawRadioStatus(bool status);
-			void drawSensorStatus(bool status);
-			void drawNtpStatus(bool status);
-			void drawThingSpeakUpdateStatus(bool status);
-			void drawThingSpeakGetStatus(bool status);
+			void drawWifiStatus(Boolean_t status);
+			void drawRadioStatus(Boolean_t status);
+			void drawSensorStatus(Boolean_t status);
+			void drawNtpStatus(Boolean_t status);
+			void drawThingSpeakUpdateStatus(Boolean_t status);
+			void drawThingSpeakGetStatus(Boolean_t status);
 			void updateStatusBar(bool resetStatus);
 			void redrawStatusBar();
 			void displaySensorData(const int8_t sensorID);
