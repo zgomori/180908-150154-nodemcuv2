@@ -8,6 +8,7 @@
       strcpy(sensorCacheArr[i].cPressure, "0");
       strcpy(sensorCacheArr[i].cBatteryVoltage, "0.00");
       strcpy(sensorCacheArr[i].cMessageCnt, "0");
+		sensorCacheArr[i].lastUpdateTime = 0;
       }
     }
 
@@ -19,6 +20,7 @@
       strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cPressure, dtostrf(sensorNodeMessage.pressure,1,WSN_PRESSURE_DECIMAL,charConvBuffer));
       strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cBatteryVoltage, dtostrf(sensorNodeMessage.batteryVoltage,1,WSN_BATTERY_DECIMAL,charConvBuffer));
       strcpy(sensorCacheArr[sensorNodeMessage.nodeID].cMessageCnt, dtostrf(sensorNodeMessage.messageCnt,1,0,charConvBuffer));
+		sensorCacheArr[sensorNodeMessage.nodeID].lastUpdateTime = now();
     }
 
     void WsnSensorDataCache::add(uint8_t nodeID, int8_t fieldMapping[], char* jsonString){
@@ -32,6 +34,7 @@
             bitSet(sensorCacheArr[nodeID].sensorSet,i);
         }
       }
+		sensorCacheArr[nodeID].lastUpdateTime = now();
     }  
     
     char* WsnSensorDataCache::getTemperature(uint8_t nodeID){
@@ -57,6 +60,14 @@
     byte WsnSensorDataCache::getSensorSet(uint8_t nodeID){
        return sensorCacheArr[nodeID].sensorSet; 
     }
+
+    time_t WsnSensorDataCache::getLastUpdateTime(uint8_t nodeID){
+       return sensorCacheArr[nodeID].lastUpdateTime; 
+    }
+
+	 void WsnSensorDataCache::getLastUpdateTimeF(uint8_t nodeID, char *timeString){
+		 	sprintf(timeString, "%02u:%02u:%02u", hour(sensorCacheArr[nodeID].lastUpdateTime), minute(sensorCacheArr[nodeID].lastUpdateTime), second(sensorCacheArr[nodeID].lastUpdateTime));
+	 }
 
     char* WsnSensorDataCache::getValueByIndex(uint8_t nodeID, uint8_t idx){
       static uint8_t ptrOffset[5] = {0,6,12,17,22};
@@ -120,17 +131,27 @@
 
 
 	void WsnSensorDataCache::printDumpHeader(){
-		Serial.println(F("================SensorDataCache dump================"));
-		Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV    MsgCnt"));
+		Serial.println(F("================SensorDataCache dump================="));
+//		Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV     MsgCnt"));
+
+//								         1         2         3        4          5
+//								123456789012345678901234567890123456789012345678901234567890
+		Serial.println(F("ID   Temp      RH   Press   BattV   MsgCnt        Upd"));
+//                      1    34.5    23.3    1023    4.33   123111   13:32:00
+
+
 	}
 
 	void WsnSensorDataCache::printDumpFooter(){
-		Serial.println(F("============End of SensorDataCache dump============="));
+		Serial.println(F("=============End of SensorDataCache dump============="));
 	}
 
 	void WsnSensorDataCache::printDumpRow(int8_t nodeID){
 		char buff[64];
-		sprintf(buff, "%2u%10s%10s%10s%10s%10s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID));
+		//sprintf(buff, "%2u%10s%10s%10s%10s%10s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID));
+		char timeBuff[9];
+		getLastUpdateTimeF(nodeID, timeBuff);
+		sprintf(buff,   "%2u%7s%8s%8s%8s%9s%11s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID), timeBuff);
 		Serial.println(buff);
 		yield();
 	}

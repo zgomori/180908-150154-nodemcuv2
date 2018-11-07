@@ -48,7 +48,7 @@ int8_t newDataFromNode = -1;
 uint32_t localSensorMessageCnt = 0;
 //time_t prevDisplay = 0; // when the digital clock was displayed
 int prevMinuteDisplay = -1;
-
+int prevDayDisplay = -1;
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -85,7 +85,7 @@ time_t getNtpTime(){
 		sysStatus.set(sysStatus.WIFI, false);
 	}
 	// TODO - nem biztos, hogy itt jó helyen van.
-	wsnGUI.updateStatusBar(sysStatus, true);
+	wsnGUI.updateStatusBar(true);
 
 	return ret;
 }
@@ -99,7 +99,7 @@ void setup() {
 	tft.setRotation(0);
 	tft.setTouch(touchCalibrateData);
   	
-	wsnGUI.drawBackground();
+	wsnGUI.initMainScreen();
 
 	readConfig(cfg);
 
@@ -124,13 +124,22 @@ void setup() {
 void loop() {
 	newDataFromNode = -1;
 
-	// clock
-	if (timeStatus() != timeNotSet) {
-		if (minute() != prevMinuteDisplay) { //update the display only if time has changed
-			prevMinuteDisplay = minute();
-			wsnGUI.displayClock(hour(), minute());
+	// clock & Date
+
+	if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){	
+		if (timeStatus() != timeNotSet) {
+			if (minute() != prevMinuteDisplay) { //update the display only if time has changed
+				prevMinuteDisplay = minute();
+				wsnGUI.displayClock();
+
+				if (day() != prevDayDisplay){
+					prevDayDisplay = day(); 
+					wsnGUI.displayDate();
+				}
+			}
 		}
 	}
+	
 	yield();
 
 	// read sensors
@@ -168,9 +177,9 @@ void loop() {
 	 }
 
 	// refresh data on TFT screen
-	if (newDataFromNode > -1){
-		wsnGUI.displaySensorData(newDataFromNode, sensorDataCache);
-		wsnGUI.updateStatusBar(sysStatus, true);
+	if ((newDataFromNode > -1) && (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN)){
+		wsnGUI.displaySensorData(newDataFromNode);
+		wsnGUI.updateStatusBar(true);
 		//sensorDataCache.dump();
 	}
 
@@ -185,6 +194,13 @@ void loop() {
 		Serial.print(touchX);
 		Serial.print(",");
 		Serial.println(touchY);
+
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){
+			wsnGUI.switchScreen(wsnGUI.SCR_MENU);
+		}
+		else{
+			wsnGUI.switchScreen(wsnGUI.SCR_MAIN);
+		}
 	}
 
 }

@@ -10,6 +10,31 @@ WsnGui::WsnGui(TFT_eSPI *_tft){
 
 }
 
+uint8_t WsnGui::getCurrentScreenId(){
+	return currentScreenId;
+}
+
+void WsnGui::switchScreen(uint8_t screenId){
+	currentScreenId = screenId;
+	switch (screenId){
+		case SCR_MAIN:
+			initMainScreen();
+			redrawStatusBar();
+			displayClock();
+			displayDate();
+			displaySensorData(0);
+			displaySensorData(1);
+			displaySensorData(6);
+
+			break;
+
+		case SCR_MENU:
+			tft->fillScreen(TFT_BLUE);
+			break;
+	} 
+	
+}
+
 void WsnGui::drawWifiStatus(bool status){
 	tftUtil.drawIcon4(&iconWifi, status ? cpIconNormal : cpIconError, 4, 3);
 }
@@ -34,7 +59,7 @@ void WsnGui::drawThingSpeakGetStatus(bool status){
 	tftUtil.drawIcon4(&iconCloudDown, status ? cpIconNormal : cpIconError, 136, 5);
 }
 
-void WsnGui::updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus){
+void WsnGui::updateStatusBar(bool resetStatus){
 	if (sysStatus.getChangeBits() != 0){
 		if (sysStatus.isChanged(sysStatus.WIFI)){
 			drawWifiStatus(sysStatus.get(sysStatus.WIFI));
@@ -61,7 +86,30 @@ void WsnGui::updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus){
 	}	
 }
 
-void WsnGui::drawBackground(){
+void WsnGui::redrawStatusBar(){
+	if (sysStatus.getInt(sysStatus.WIFI) != -1){
+		drawWifiStatus(sysStatus.get(sysStatus.WIFI));
+	}
+	if (sysStatus.getInt(sysStatus.RADIO) != -1){
+		drawRadioStatus(sysStatus.get(sysStatus.RADIO));
+	}
+	if (sysStatus.getInt(sysStatus.LOCAL_SENSOR) != -1){
+		drawSensorStatus(sysStatus.get(sysStatus.LOCAL_SENSOR));
+	}
+	if (sysStatus.getInt(sysStatus.NTP) != -1){
+		drawNtpStatus(sysStatus.get(sysStatus.NTP));
+	}		
+	if (sysStatus.getInt(sysStatus.TS_UPDATE) != -1){
+		drawThingSpeakUpdateStatus(sysStatus.get(sysStatus.TS_UPDATE));
+	}
+	if (sysStatus.getInt(sysStatus.TS_GET) != -1){
+		drawThingSpeakGetStatus(sysStatus.get(sysStatus.TS_GET));
+	}
+}
+
+
+void WsnGui::initMainScreen(){
+	tft->setRotation(0);
 	tft->setTextDatum(ML_DATUM);
 
 	tft->fillRect(0,		0,		240,	24,	COLOR_BG_STATUSBAR);
@@ -85,7 +133,7 @@ void WsnGui::drawBackground(){
 
 }
 
-void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache){
+void WsnGui::displaySensorData(const int8_t sensorID){
 	tft->setTextPadding(100);
 	switch (sensorID){
 		case 0 :
@@ -159,10 +207,27 @@ void WsnGui::displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensor
 */
 }
 
-void WsnGui::displayClock(int hour, int minute){
+void WsnGui::displayClock(){
 	char tftClock[6];
-	sprintf(tftClock, "%u:%02u", hour, minute);
+	sprintf(tftClock, "%u:%02u", hour(), minute());
  	tft->setTextColor(TFT_GREEN,TFT_BLACK);
 	tft->setTextDatum(MC_DATUM);  
 	tft->drawString(tftClock, 120, 60, 7);
 }
+
+void WsnGui::displayDate(){
+	char tftDate[6];
+	char tftDOW[5];
+	sprintf(tftDate, "%02u.%02u", month(), day());
+	strncpy(tftDOW, dayShortNames + (weekday() * 4), 4);
+	tftDOW[4] = 0;
+
+	tft->setTextColor(TFT_DARKGREY,TFT_BLACK);
+	tft->setFreeFont(CF_ORB11);
+	tft->setTextDatum(ML_DATUM);
+	tft->drawString(tftDate, 4, 100, 1);
+	tft->setTextDatum(MR_DATUM);
+	tft->drawString(tftDOW, 237, 100, 1);
+
+}
+
