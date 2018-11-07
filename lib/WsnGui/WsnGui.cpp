@@ -29,7 +29,7 @@ void WsnGui::switchScreen(uint8_t screenId){
 			break;
 
 		case SCR_MENU:
-			tft->fillScreen(TFT_BLUE);
+			displaySensorDump();
 			break;
 	} 
 	
@@ -231,3 +231,28 @@ void WsnGui::displayDate(){
 
 }
 
+void WsnGui::displaySensorDump(){
+	int posY = 25;
+	int lh = 14;
+	char buff[64];
+
+	tft->setRotation(1);
+	tft->fillScreen(TFT_BLACK);
+	tft->setTextColor(TFT_GREEN,TFT_BLACK);
+	tft->setTextDatum(ML_DATUM);  
+	tft->setTextFont(0);
+ 
+   tft->drawString(sensorDataCache.dumpTitle, 0, posY, 1);
+  	posY = posY + lh;
+   tft->drawString(sensorDataCache.dumpHeader, 0, posY, 1);
+  	posY = posY + lh;
+
+	for(int8_t i = 0; i < sensorDataCache.size(); i++){
+		sensorDataCache.getDumpRow(i, buff);
+		tft->drawString(buff, 0, posY, 1);
+		posY = posY + lh;
+	}	
+
+   tft->drawString(sensorDataCache.dumpFooter, 0, posY, 1);
+ 
+}

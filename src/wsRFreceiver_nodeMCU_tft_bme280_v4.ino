@@ -177,9 +177,14 @@ void loop() {
 	 }
 
 	// refresh data on TFT screen
-	if ((newDataFromNode > -1) && (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN)){
-		wsnGUI.displaySensorData(newDataFromNode);
-		wsnGUI.updateStatusBar(true);
+	if (newDataFromNode > -1){ 
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){
+			wsnGUI.displaySensorData(newDataFromNode);
+			wsnGUI.updateStatusBar(true);
+		}
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MENU){
+			wsnGUI.displaySensorDump();
+		}		
 		//sensorDataCache.dump();
 	}
 

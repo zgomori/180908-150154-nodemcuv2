@@ -24,13 +24,16 @@
 			} WsnSensorNodeData;
     	
 			WsnSensorNodeData sensorCacheArr[10];
+
+
 			void getJsonFieldValue(char* jsonString, int8_t fieldNo, char* dst);
 			void setValueByIndex(uint8_t nodeID, uint8_t idx, char* value);
-			void printDumpHeader();
-			void printDumpFooter();
-			void printDumpRow(int8_t nodeID);
 			
 		public:
+			const char *dumpTitle =   "================SensorDataCache dump=================";
+			const char *dumpHeader =  "ID   Temp      RH   Press   BattV   MsgCnt   LastUpd ";
+			const char *dumpFooter =  "=============End of SensorDataCache dump=============";
+
 			WsnSensorDataCache();
 			void add(WsnSensorNodeMessage &sensorNodeMessage);
 			void add(uint8_t nodeID, int8_t fieldMapping[], char* jsonString);
@@ -45,6 +48,8 @@
 			char* getValueByIndex(uint8_t nodeID, uint8_t idx);
 			void createThingSpeakParam(uint8_t nodeID, char* dst);
 			void printData(int8_t nodeID);
+			void getDumpRow(int8_t nodeID, char *buff);
 			void dump();
+			uint8_t size();
     };    
 #endif

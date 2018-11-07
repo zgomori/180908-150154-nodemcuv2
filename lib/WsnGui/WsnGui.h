@@ -58,6 +58,7 @@
 			void displaySensorData(const int8_t sensorID);
 			void displayClock();
 			void displayDate();
+			void displaySensorDump();
     };    
 
 extern WsnSensorDataCache sensorDataCache;
