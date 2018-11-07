@@ -4,6 +4,7 @@
    #include "Arduino.h" 
    #include "TFT_eSPI.h"
 	#include "TftUtil.h"
+	#include <TimeLib.h>
 	#include "WsnSystemStatus.h"
 	#include "WsnSensorDataCache.h"
    #include "icons.h"
@@ -25,19 +26,40 @@
          TFT_eSPI *tft;
 			TftUtil tftUtil;
 
+			uint8_t currentScreenId = 0;
 			uint16_t cpIconNormal[16];
 			uint16_t cpIconError[16];
+//			const char *dayShortNames = "ErrSunMonTueWedThuFriSat"; 
+			const char *dayShortNames = "Err  Vas HetKedd SzeCsüt Pen Szo"; 
+		
+		
 		public:
-         WsnGui(TFT_eSPI *tft);
-      	void drawBackground();
+      	enum screen_enum{
+				SCR_MAIN = 0,
+				SCR_MENU = 1,
+				SCR_SENSOR_DUMP = 2,
+				SCR_CONFIG = 3,
+				SCR_STATUS = 4
+			};
+		
+		
+		   WsnGui(TFT_eSPI *tft);
+			uint8_t getCurrentScreenId();
+			void switchScreen(uint8_t screenId);
+      	void initMainScreen();
 			void drawWifiStatus(bool status);
 			void drawRadioStatus(bool status);
 			void drawSensorStatus(bool status);
 			void drawNtpStatus(bool status);
 			void drawThingSpeakUpdateStatus(bool status);
 			void drawThingSpeakGetStatus(bool status);
-			void updateStatusBar(WsnSystemStatus &sysStatus, bool resetStatus);
-			void displaySensorData(const int8_t sensorID, WsnSensorDataCache &sensorDataCache);
-			void displayClock(int hour, int minute);
+			void updateStatusBar(bool resetStatus);
+			void redrawStatusBar();
+			void displaySensorData(const int8_t sensorID);
+			void displayClock();
+			void displayDate();
     };    
+
+extern WsnSensorDataCache sensorDataCache;
+extern WsnSystemStatus sysStatus;
 #endif

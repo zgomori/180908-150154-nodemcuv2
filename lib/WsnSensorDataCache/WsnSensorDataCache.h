@@ -4,6 +4,7 @@
 	//#include "ESP8266WiFi.h"
 	#include "WsnCommon.h"
 	#include "Arduino.h" 
+	#include <TimeLib.h>
 
 	#define WSN_TEMPERATURE_DECIMAL 1
 	#define WSN_HUMIDITY_DECIMAL 1
@@ -19,6 +20,7 @@
 				char cBatteryVoltage[5];
 				char cMessageCnt[7];
 				byte sensorSet;               // bits: messageCnt, voltage, pressure, humidity, temperature.  The least significant bit is temperature
+				time_t lastUpdateTime;
 			} WsnSensorNodeData;
     	
 			WsnSensorNodeData sensorCacheArr[10];
@@ -37,6 +39,8 @@
 			char* getPressure(uint8_t nodeID);
 			char* getBatteryVoltage(uint8_t nodeID);
 			char* getMessageCnt(uint8_t nodeID);
+			time_t getLastUpdateTime(uint8_t nodeID);
+			void getLastUpdateTimeF(uint8_t nodeID, char *timeString);
 			byte getSensorSet(uint8_t nodeID);
 			char* getValueByIndex(uint8_t nodeID, uint8_t idx);
 			void createThingSpeakParam(uint8_t nodeID, char* dst);

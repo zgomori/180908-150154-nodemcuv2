@@ -21,6 +21,7 @@
 
 			void set(statusType_enum elem, bool value);
 			bool get(statusType_enum elem);
+			int8_t getInt(statusType_enum elem);
 			bool isChanged(statusType_enum elem);
 			uint8_t getChangeBits();
 			void resetChangeBits(); 

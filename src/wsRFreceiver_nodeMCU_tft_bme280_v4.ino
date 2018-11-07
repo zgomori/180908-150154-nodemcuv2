@@ -48,12 +48,15 @@ int8_t newDataFromNode = -1;
 uint32_t localSensorMessageCnt = 0;
 //time_t prevDisplay = 0; // when the digital clock was displayed
 int prevMinuteDisplay = -1;
-
+int prevDayDisplay = -1;
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
 TFT_eSPI tft = TFT_eSPI();  
+uint16_t touchCalibrateData[5] =  { 213, 3571, 377, 3516, 4 };
+uint32_t touchedMillis = millis();
+
 TftUtil tftUtil(&tft);
 WsnGui wsnGUI(&tft); 
 WsnSystemStatus sysStatus = WsnSystemStatus();
@@ -64,7 +67,6 @@ NTPclient ntpClient;
 
 WsnReceiverConfig cfg;
 
-//uint32_t touchedMillis = millis();
 
 WsnSensorDataCache sensorDataCache; 
 WsnTimer wsnTimer;
@@ -83,7 +85,7 @@ time_t getNtpTime(){
 		sysStatus.set(sysStatus.WIFI, false);
 	}
 	// TODO - nem biztos, hogy itt jó helyen van.
-	wsnGUI.updateStatusBar(sysStatus, true);
+	wsnGUI.updateStatusBar(true);
 
 	return ret;
 }
@@ -95,7 +97,9 @@ void setup() {
 
 	tft.begin();
 	tft.setRotation(0);
-  	wsnGUI.drawBackground();
+	tft.setTouch(touchCalibrateData);
+  	
+	wsnGUI.initMainScreen();
 
 	readConfig(cfg);
 
@@ -120,13 +124,22 @@ void setup() {
 void loop() {
 	newDataFromNode = -1;
 
-	// clock
-	if (timeStatus() != timeNotSet) {
-		if (minute() != prevMinuteDisplay) { //update the display only if time has changed
-			prevMinuteDisplay = minute();
-			wsnGUI.displayClock(hour(), minute());
+	// clock & Date
+
+	if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){	
+		if (timeStatus() != timeNotSet) {
+			if (minute() != prevMinuteDisplay) { //update the display only if time has changed
+				prevMinuteDisplay = minute();
+				wsnGUI.displayClock();
+
+				if (day() != prevDayDisplay){
+					prevDayDisplay = day(); 
+					wsnGUI.displayDate();
+				}
+			}
 		}
 	}
+	
 	yield();
 
 	// read sensors
@@ -164,21 +177,32 @@ void loop() {
 	 }
 
 	// refresh data on TFT screen
-	if (newDataFromNode > -1){
-		wsnGUI.displaySensorData(newDataFromNode, sensorDataCache);
-		wsnGUI.updateStatusBar(sysStatus, true);
+	if ((newDataFromNode > -1) && (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN)){
+		wsnGUI.displaySensorData(newDataFromNode);
+		wsnGUI.updateStatusBar(true);
 		//sensorDataCache.dump();
 	}
 
 	 delay(1);
 
-/*
-	 if (touch.touched() && (millis() - touchedMillis > 500)) {
-		TS_Point p = touch.getPoint();
-		Serial.print("x ="); Serial.print(p.x); Serial.print(" y ="); Serial.println(p.y);
-		touchedMillis = millis();
-	 }
- */   
+	// touch handler
+	uint16_t touchX = 0, touchY = 0; 
+	if (tft.getTouch(&touchX, &touchY) && (millis() - touchedMillis > 500)) {
+		touchedMillis = millis(); 
+		tft.fillCircle(touchX, touchY, 2, TFT_WHITE);
+		Serial.print("x,y = ");
+		Serial.print(touchX);
+		Serial.print(",");
+		Serial.println(touchY);
+
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){
+			wsnGUI.switchScreen(wsnGUI.SCR_MENU);
+		}
+		else{
+			wsnGUI.switchScreen(wsnGUI.SCR_MAIN);
+		}
+	}
+
 }
 
 

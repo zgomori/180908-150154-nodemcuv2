@@ -16,6 +16,10 @@ bool WsnSystemStatus::get(statusType_enum elem){
 	return (bool)statusArr[elem];
 }
 
+int8_t WsnSystemStatus::getInt(statusType_enum elem){
+	return statusArr[elem];
+}
+
 bool WsnSystemStatus::isChanged(statusType_enum elem){
 	return bitRead(changeBits, elem);
 }
