@@ -115,57 +115,34 @@
         dst[i] = 0;
       }
   }
-/*
-  void WsnSensorDataCache::dump(){
-    Serial.println(F("================SensorDataCache dump================"));
-    Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV    MsgCnt"));
-    for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
-      char buff[64];
-      sprintf(buff, "%2u%10s%10s%10s%10s%10s", i, getTemperature(i), getHumidity(i), getPressure(i), getBatteryVoltage(i), getMessageCnt(i));
-      Serial.println(buff);
-      yield();
-    }
-    Serial.println(F("============End of SensorDataCache dump============="));
-  }
-*/
 
-
-	void WsnSensorDataCache::printDumpHeader(){
-		Serial.println(F("================SensorDataCache dump================="));
-//		Serial.println(F("ID      Temp  Humidity   Pessure  BatteryV     MsgCnt"));
-
-//								         1         2         3        4          5
-//								123456789012345678901234567890123456789012345678901234567890
-		Serial.println(F("ID   Temp      RH   Press   BattV   MsgCnt        Upd"));
-//                      1    34.5    23.3    1023    4.33   123111   13:32:00
-
-
-	}
-
-	void WsnSensorDataCache::printDumpFooter(){
-		Serial.println(F("=============End of SensorDataCache dump============="));
-	}
-
-	void WsnSensorDataCache::printDumpRow(int8_t nodeID){
-		char buff[64];
-		//sprintf(buff, "%2u%10s%10s%10s%10s%10s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID));
+	void WsnSensorDataCache::getDumpRow(int8_t nodeID, char *buff){
 		char timeBuff[9];
 		getLastUpdateTimeF(nodeID, timeBuff);
 		sprintf(buff,   "%2u%7s%8s%8s%8s%9s%11s", nodeID, getTemperature(nodeID), getHumidity(nodeID), getPressure(nodeID), getBatteryVoltage(nodeID), getMessageCnt(nodeID), timeBuff);
-		Serial.println(buff);
 		yield();
 	}
 
 	void WsnSensorDataCache::printData(int8_t nodeID){
-		printDumpHeader();
-		printDumpRow(nodeID);
-		printDumpFooter();
+		char buff[64];
+		Serial.println(dumpTitle);
+		Serial.println(dumpHeader);
+		getDumpRow(nodeID, buff);
+		Serial.println(buff);
+		Serial.println(dumpFooter);
 	}
 
 	void WsnSensorDataCache::dump(){
-		printDumpHeader();
+		char buff[64];
+		Serial.println(dumpTitle);
+		Serial.println(dumpHeader);
 		for(int8_t i = 0; i < sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);i++){
-			printDumpRow(i);
+			getDumpRow(i, buff);
+			Serial.println(buff);
 		}	
-		printDumpFooter();
+		Serial.println(dumpFooter);
+	}
+
+	uint8_t WsnSensorDataCache::size(){
+		return sizeof(sensorCacheArr)/sizeof(sensorCacheArr[0]);
 	}

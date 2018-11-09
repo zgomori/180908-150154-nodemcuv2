@@ -46,9 +46,6 @@
 uint32_t sensorMillis = millis();
 int8_t newDataFromNode = -1;
 uint32_t localSensorMessageCnt = 0;
-//time_t prevDisplay = 0; // when the digital clock was displayed
-int prevMinuteDisplay = -1;
-int prevDayDisplay = -1;
 
 Adafruit_BME280     bme(BME_CS); // hardware SPI
 RF24                radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -124,31 +121,19 @@ void setup() {
 void loop() {
 	newDataFromNode = -1;
 
-	// clock & Date
-
+	// dispay clock & Date
 	if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){	
-		if (timeStatus() != timeNotSet) {
-			if (minute() != prevMinuteDisplay) { //update the display only if time has changed
-				prevMinuteDisplay = minute();
-				wsnGUI.displayClock();
-
-				if (day() != prevDayDisplay){
-					prevDayDisplay = day(); 
-					wsnGUI.displayDate();
-				}
-			}
-		}
+		wsnGUI.displayDateTime();
 	}
 	
 	yield();
 
-	// read sensors
-
-	// read Radio
+	// read Radio and store data 
 	getRadioMessage();
+
 	yield();
 	
-	// read local sensor & thingspeak sensors
+	// read local sensor & thingspeak sensors and store data 
 	if (newDataFromNode == -1){ 
 		wsnTimer.ticker();
 		yield(); 
@@ -160,26 +145,22 @@ void loop() {
 	if (newDataFromNode > -1){
 		sensorDataCache.printData(newDataFromNode);
 
+		// send radio and local sensor data to thingspeak 
 		if((newDataFromNode < 6) && (strlen(cfg.thingSpeakAPIKeyArr[newDataFromNode])>0)){
-			if (checkWifiConnection(cfg)){
-				Serial.println("Update ThingSpeak");
-				char updateParams[80] = "\0";
-				sensorDataCache.createThingSpeakParam(newDataFromNode, updateParams);
-				bool tsUpdateStat = tsUtil.update(cfg.thingSpeakAPIKeyArr[newDataFromNode] ,updateParams);
-				sysStatus.set(sysStatus.WIFI, true);
-				sysStatus.set(sysStatus.TS_UPDATE, tsUpdateStat);
-			}
-			else{
-				sysStatus.set(sysStatus.WIFI, false);
-			}
+			updateThingSpeak(newDataFromNode);	
 		}
-		delay(1);
 	 }
 
+	yield();
 	// refresh data on TFT screen
-	if ((newDataFromNode > -1) && (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN)){
-		wsnGUI.displaySensorData(newDataFromNode);
-		wsnGUI.updateStatusBar(true);
+	if (newDataFromNode > -1){ 
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MAIN){
+			wsnGUI.displaySensorData(newDataFromNode);
+			wsnGUI.updateStatusBar(true);
+		}
+		if (wsnGUI.getCurrentScreenId() == wsnGUI.SCR_MENU){
+			wsnGUI.displaySensorDump();
+		}		
 		//sensorDataCache.dump();
 	}
 
@@ -409,3 +390,16 @@ void initBME280(){
 	);
 }
 
+void updateThingSpeak(int8_t nodeID){
+	if (checkWifiConnection(cfg)){
+		Serial.println("Update ThingSpeak");
+		char updateParams[80] = "\0";
+		sensorDataCache.createThingSpeakParam(nodeID, updateParams);
+		bool tsUpdateStat = tsUtil.update(cfg.thingSpeakAPIKeyArr[nodeID], updateParams);
+		sysStatus.set(sysStatus.WIFI, true);
+		sysStatus.set(sysStatus.TS_UPDATE, tsUpdateStat);
+	}
+	else{
+		sysStatus.set(sysStatus.WIFI, false);
+	}
+}

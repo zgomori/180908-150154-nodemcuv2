@@ -29,9 +29,14 @@
 			uint8_t currentScreenId = 0;
 			uint16_t cpIconNormal[16];
 			uint16_t cpIconError[16];
-//			const char *dayShortNames = "ErrSunMonTueWedThuFriSat"; 
-			const char *dayShortNames = "Err  Vas HetKedd SzeCsüt Pen Szo"; 
+//			const char *dayShortNames = " Err Sun Mon Tue Wed Thu Fri Sat";
+			const char *dayShortNames = " Err Vas HetKedd SzeCsut Pen Szo"; 
+			int prevMinuteDisplay = -1;
+			int prevDayDisplay = -1;
+
 		
+			void displayClock();
+			void displayDate();
 		
 		public:
       	enum screen_enum{
@@ -47,17 +52,17 @@
 			uint8_t getCurrentScreenId();
 			void switchScreen(uint8_t screenId);
       	void initMainScreen();
-			void drawWifiStatus(bool status);
-			void drawRadioStatus(bool status);
-			void drawSensorStatus(bool status);
-			void drawNtpStatus(bool status);
-			void drawThingSpeakUpdateStatus(bool status);
-			void drawThingSpeakGetStatus(bool status);
+			void drawWifiStatus(Boolean_t status);
+			void drawRadioStatus(Boolean_t status);
+			void drawSensorStatus(Boolean_t status);
+			void drawNtpStatus(Boolean_t status);
+			void drawThingSpeakUpdateStatus(Boolean_t status);
+			void drawThingSpeakGetStatus(Boolean_t status);
 			void updateStatusBar(bool resetStatus);
 			void redrawStatusBar();
 			void displaySensorData(const int8_t sensorID);
-			void displayClock();
-			void displayDate();
+			void displaySensorDump();
+			void displayDateTime();
     };    
 
 extern WsnSensorDataCache sensorDataCache;
