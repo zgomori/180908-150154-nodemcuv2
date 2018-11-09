@@ -207,6 +207,20 @@ void WsnGui::displaySensorData(const int8_t sensorID){
 */
 }
 
+void WsnGui::displayDateTime(){
+	if (timeStatus() != timeNotSet){
+		if (minute() != prevMinuteDisplay){ //update the display only if time has changed
+			prevMinuteDisplay = minute();
+			displayClock();
+
+			if (day() != prevDayDisplay){  //update the display only if date has changed
+				prevDayDisplay = day(); 
+				displayDate();
+			}
+		}
+	}
+}
+
 void WsnGui::displayClock(){
 	char tftClock[6];
 	sprintf(tftClock, "%u:%02u", hour(), minute());
@@ -228,6 +242,12 @@ void WsnGui::displayDate(){
 	tft->drawString(tftDate, 4, 100, 1);
 	tft->setTextDatum(MR_DATUM);
 	tft->drawString(tftDOW, 237, 100, 1);
+
+	for(int i=0;i<8;i++){
+		strncpy(tftDOW, dayShortNames + (i * 4), 4);
+
+		Serial.println(tftDOW);
+	}
 
 }
 
