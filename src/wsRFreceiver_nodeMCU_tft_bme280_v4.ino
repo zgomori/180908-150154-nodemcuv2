@@ -21,6 +21,7 @@
 #include "WsnGui.h"
 #include "WsnSystemStatus.h"
 #include "DataHistory.h"
+#include "TftBarChart.h"
 
 
 #define RADIO_CE_PIN   D3
@@ -82,6 +83,37 @@ uint8_t dayHistorySaved = -1;
 /******************************************************/
 DataHistory<float,10> tempH1;
 DataHistory<float,6> tempH2;
+
+/*
+barChartConfig_t<int16_t> tconfig = {
+	.origoX = 100,
+	.origoY = 100,
+	.scaleLineOffset = -2,
+	.scaleLineWidth = 2,
+	.pixelPerUnit = 5,
+	.barWidth = 8,
+	.barPadding = 4,
+	.numberOfBars = 3,
+	.scaleUnit = 1,
+	.minValue = -5,
+	.maxValue = 5
+};
+*/
+
+TftBarChart<int16_t> tbc((barChartConfig_t<int16_t>){
+	.origoX = 100,
+	.origoY = 100,
+	.scaleLineOffset = -2,
+	.scaleLineWidth = 2,
+	.pixelPerUnit = 5,
+	.barWidth = 8,
+	.barPadding = 4,
+	.numberOfBars = 3,
+	.scaleUnit = 1,
+	.minValue = -5,
+	.maxValue = 5
+});
+
 
 /*****************************************************/
 
