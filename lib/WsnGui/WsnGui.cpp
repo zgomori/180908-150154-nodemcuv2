@@ -242,13 +242,6 @@ void WsnGui::displayDate(){
 	tft->drawString(tftDate, 4, 100, 1);
 	tft->setTextDatum(MR_DATUM);
 	tft->drawString(tftDOW, 237, 100, 1);
-
-	for(int i=0;i<8;i++){
-		strncpy(tftDOW, dayShortNames + (i * 4), 4);
-
-		Serial.println(tftDOW);
-	}
-
 }
 
 void WsnGui::displaySensorDump(){

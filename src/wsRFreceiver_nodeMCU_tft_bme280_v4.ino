@@ -20,6 +20,7 @@
 #include "TftUtil.h"
 #include "WsnGui.h"
 #include "WsnSystemStatus.h"
+#include "DataHistory.h"
 
 
 #define RADIO_CE_PIN   D3
@@ -70,6 +71,19 @@ WsnTimer wsnTimer;
 
 ThingSpeakUtil tsUtil(&client, cfg.thingSpeakAddress);
 
+DataHistory<uint16_t,24> pressureHistoryHourly;
+DataHistory<uint16_t,14> pressureHistoryDaily;
+DataHistory<float,24> temperatureHistoryHourly;
+
+uint8_t hourHistorySaved = -1;
+uint8_t dayHistorySaved = -1;
+
+
+/******************************************************/
+DataHistory<float,10> tempH1;
+DataHistory<float,6> tempH2;
+
+/*****************************************************/
 
 time_t getNtpTime(){
 	time_t ret = 0;
@@ -113,9 +127,6 @@ void setup() {
 	wsnTimer.init(cfg);
 	wsnTimer.setTriggerFunction(timerTrigger);
 
-
-	//  touch.begin();  // Must be done before setting rotation
-	//  touch.setRotation(0);
 }
 
 void loop() {
@@ -371,6 +382,47 @@ bool readLocalBME280(){
 	_sensorNodeMessage.messageCnt = localSensorMessageCnt;
 
 	sensorDataCache.add(_sensorNodeMessage);
+
+
+	// History
+/*
+	if (hourHistorySaved != hour()){
+		hourHistorySaved = hour();
+		pressureHistoryHourly.add((uint16_t)pressure);
+		temperatureHistoryHourly.add(temp);
+
+		Serial.println("******HISTORY**********");
+		for(int i=0; i< temperatureHistoryHourly.size();i++){
+			Serial.println(temperatureHistoryHourly[i]);
+		}
+	}
+	
+	if (dayHistorySaved != day()){
+		dayHistorySaved = day();
+		pressureHistoryDaily.add((uint16_t)pressure);
+	}
+*/
+
+	bool x;
+	x = tempH1.add(temp);
+	if (x){
+		float avg = tempH1.getAvg();
+		tempH2.add(avg);
+	}
+
+	Serial.println("******HISTORY 1**********");
+	for(int i=0;i<tempH1.size();i++){
+		Serial.println(tempH1[i]);
+	}
+	Serial.print("oldest: ");
+	Serial.println(tempH1.getOldest());
+
+	Serial.println("******HISTORY 2**********");
+	for(int i=0;i<tempH2.size();i++){
+		Serial.println(tempH2[i]);
+	}	
+	Serial.print("oldest: ");
+	Serial.println(tempH2.getOldest());	
 
 	return true;
 }      
