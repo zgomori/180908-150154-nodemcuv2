@@ -21,7 +21,7 @@
 #include "WsnGui.h"
 #include "WsnSystemStatus.h"
 #include "DataHistory.h"
-#include "TftBarChart.h"
+
 
 
 #define RADIO_CE_PIN   D3
@@ -85,35 +85,23 @@ DataHistory<float,10> tempH1;
 DataHistory<float,6> tempH2;
 
 /*
-barChartConfig_t<int16_t> tconfig = {
-	.origoX = 100,
-	.origoY = 100,
-	.scaleLineOffset = -2,
-	.scaleLineWidth = 2,
-	.pixelPerUnit = 5,
-	.barWidth = 8,
-	.barPadding = 4,
-	.numberOfBars = 3,
-	.scaleUnit = 1,
-	.minValue = -5,
-	.maxValue = 5
-};
+			TftBarChart<uint8_t> pressureBar1(&tft, (barChartConfig_t<uint8_t>){
+				.origoX = 205,
+				.origoY = 250,
+				.scaleLineOffset = -2,
+				.scaleLineWidth = 2,
+				.pixelPerUnit = 4,
+				.barWidth = 5,
+				.barPadding = 4,
+				.numberOfBars = 1,
+				.scaleUnit = 1,
+				.minValue = -5,
+				.maxValue = 5,
+				.bgColor = 0x18C3,
+				.scaleColor = 0x7BEF,
+				.barColor = 0x07E0
+			});
 */
-
-TftBarChart<int16_t> tbc((barChartConfig_t<int16_t>){
-	.origoX = 100,
-	.origoY = 100,
-	.scaleLineOffset = -2,
-	.scaleLineWidth = 2,
-	.pixelPerUnit = 5,
-	.barWidth = 8,
-	.barPadding = 4,
-	.numberOfBars = 3,
-	.scaleUnit = 1,
-	.minValue = -5,
-	.maxValue = 5
-});
-
 
 /*****************************************************/
 

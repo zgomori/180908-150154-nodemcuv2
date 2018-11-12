@@ -8,6 +8,39 @@ WsnGui::WsnGui(TFT_eSPI *_tft){
 	tftUtil.generateColorPalette16(COLOR_ICON_NORMAL, COLOR_BG_STATUSBAR, cpIconNormal);
 	tftUtil.generateColorPalette16(COLOR_ICON_ERROR, COLOR_BG_STATUSBAR, cpIconError);
 
+	pressureBar1.init(_tft, (barChartConfig_t<int8_t>){
+		.origoX = 223,
+		.origoY = 255,
+		.scaleLineOffset = -2,
+		.scaleLineWidth = 2,
+		.pixelPerUnit = 4,
+		.barWidth = 5,
+		.barPadding = 4,
+		.numberOfBars = 1,
+		.scaleUnit = 1,
+		.minValue = -5,
+		.maxValue = 5,
+		.bgColor = 0x18C3,
+		.scaleColor = 0x7BEF,
+		.barColor = 0x07E0
+	});
+
+	pressureBar2.init(_tft, (barChartConfig_t<int8_t>){
+		.origoX = 130,
+		.origoY = 318,
+		.scaleLineOffset = -2,
+		.scaleLineWidth = 2,
+		.pixelPerUnit = 4,
+		.barWidth = 5,
+		.barPadding = 3,
+		.numberOfBars = 10,
+		.scaleUnit = 2,
+		.minValue = 0,
+		.maxValue = 25,
+		.bgColor = 0x18C3,
+		.scaleColor = 0x7BEF,
+		.barColor = 0x07E0
+	});
 }
 
 uint8_t WsnGui::getCurrentScreenId(){
@@ -131,6 +164,10 @@ void WsnGui::initMainScreen(){
 	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
 	tft->drawString("atm.pressure", 124, 232, 2);
 
+	pressureBar1.drawScale();
+	pressureBar2.drawScale();
+	//!!!test
+	pressureBar1.drawBar(0,4,false);
 }
 
 void WsnGui::displaySensorData(const int8_t sensorID){
@@ -143,8 +180,9 @@ void WsnGui::displaySensorData(const int8_t sensorID){
 			tft->drawString(sensorDataCache.getTemperature(0), 60, 159, 1);
 			tft->setFreeFont(CF_ORB11);
 			tft->drawString(sensorDataCache.getHumidity(0), 60, 194, 1);
-
-			tft->drawString(sensorDataCache.getPressure(0), 180, 257, 1);
+			tft->setTextPadding(80);
+//			tft->drawString(sensorDataCache.getPressure(0), 180, 257, 1);
+			tft->drawString(sensorDataCache.getPressure(0), 180, 253, 1);
 			break;
 
 		case 6 :

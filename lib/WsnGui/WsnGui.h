@@ -9,6 +9,7 @@
 	#include "WsnSensorDataCache.h"
    #include "icons.h"
 	#include <Fonts/Custom/orbitron_light_11_2.h>
+	#include "TftBarChart.h"
   
 	#define CF_OL32 &Orbitron_Light_32
 	#define CF_ORB11 &orbitron_light11pt7b
@@ -34,7 +35,9 @@
 			int prevMinuteDisplay = -1;
 			int prevDayDisplay = -1;
 
-		
+			TftBarChart<int8_t> pressureBar1;
+			TftBarChart<int8_t> pressureBar2;
+
 			void displayClock();
 			void displayDate();
 		
