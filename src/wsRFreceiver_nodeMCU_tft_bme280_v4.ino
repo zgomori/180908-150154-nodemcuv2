@@ -363,10 +363,17 @@ bool checkWifiConnection(WsnReceiverConfig &_cfg){
 	WiFi.begin(_cfg.wifiSsid, _cfg.wifiPass);
 
 	uint32_t startMillis = millis();
-	while ((WiFi.status() != WL_CONNECTED) || (millis() - startMillis > 5000)){
-		Serial.println("Connecting to SSID...");
-		delay(500);
+	while (millis() - startMillis < 5000){
+		Serial.print("Connecting to SSID...");
+		Serial.print(_cfg.wifiSsid);
+		Serial.print(" Status: ");
+		Serial.println(WiFi.status());
+		if (WiFi.status() == WL_CONNECTED){
+			break;	
+		} 
+		delay(1000);
 	}
+
 
 	if (WiFi.status() == WL_CONNECTED){
 		Serial.println("WiFi Connected to SSID.");

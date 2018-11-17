@@ -51,8 +51,15 @@ class TftBarChart{
 			// draw Y line
 			tft->drawFastVLine(cfg.origoX, cfg.origoY - ((cfg.maxValue / cfg.scaleUnit) * cfg.pixelPerUnit), (((cfg.maxValue / cfg.scaleUnit) - (cfg.minValue / cfg.scaleUnit)) * cfg.pixelPerUnit) + 1, cfg.scaleColor);
 			// draw Y scaling
+			bool before = true;
 			for(uint16_t i = cfg.origoY - ((cfg.maxValue / cfg.scaleUnit) * cfg.pixelPerUnit); i <= cfg.origoY + (abs(cfg.minValue / cfg.scaleUnit) * cfg.pixelPerUnit); i+= cfg.pixelPerUnit){
-    			tft->drawFastHLine(cfg.origoX + cfg.scaleLineOffset, i, cfg.scaleLineWidth, cfg.scaleColor);
+				if (before){	
+    				tft->drawFastHLine(cfg.origoX + cfg.scaleLineOffset, i, cfg.scaleLineWidth, cfg.scaleColor);
+				}
+				else{
+					tft->drawFastHLine(cfg.origoX+1 , i, cfg.scaleLineWidth, cfg.scaleColor);
+				}	
+				before = !before; 
   			}
  		}
 
@@ -70,14 +77,14 @@ class TftBarChart{
 			} 
 
 			if (value > 0){
-				tft->fillRect(cfg.origoX + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex) , cfg.origoY - ((value / cfg.scaleUnit) * cfg.pixelPerUnit), cfg.barWidth, ((value / cfg.scaleUnit) * cfg.pixelPerUnit), cfg.barColor);
+				tft->fillRect(cfg.origoX + cfg.scaleLineWidth + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex) , cfg.origoY - ((value / cfg.scaleUnit) * cfg.pixelPerUnit), cfg.barWidth, ((value / cfg.scaleUnit) * cfg.pixelPerUnit), cfg.barColor);
 			}
 			else if (value < 0){
-				tft->fillRect(cfg.origoX + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex), cfg.origoY + 1, cfg.barWidth, abs(((value / cfg.scaleUnit) * cfg.pixelPerUnit)), cfg.barColor);
+				tft->fillRect(cfg.origoX + cfg.scaleLineWidth + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex), cfg.origoY + 1, cfg.barWidth, abs(((value / cfg.scaleUnit) * cfg.pixelPerUnit)), cfg.barColor);
 			}
 			else{ // 0
 			//    tft.fillRect(origoX+barPadding, origoY-2, barWidth, 5, TFT_GREEN);
-				tft->drawFastHLine(cfg.origoX + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex), cfg.origoY, cfg.barWidth, cfg.barColor);
+				tft->drawFastHLine(cfg.origoX + cfg.scaleLineWidth + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * barIndex), cfg.origoY, cfg.barWidth, cfg.barColor);
 			}
 		} 
 
