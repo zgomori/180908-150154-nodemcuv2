@@ -10,6 +10,7 @@
    #include "icons.h"
 	#include <Fonts/Custom/orbitron_light_11_2.h>
 	#include "TftBarChart.h"
+	#include "DataHistory.h"
   
 	#define CF_OL32 &Orbitron_Light_32
 	#define CF_ORB11 &orbitron_light11pt7b
@@ -18,7 +19,8 @@
    #define COLOR_BG_CLOCK     0x0000
 	#define COLOR_BG_BLOCK1		0x18C3
 	#define COLOR_BG_BLOCK2		0x10A2
-   #define COLOR_ICON_NORMAL	0x07E0
+//   #define COLOR_ICON_NORMAL	0x07E0
+   #define COLOR_ICON_NORMAL	0x7BEF
 	#define COLOR_ICON_ERROR	0xF800
 
 
@@ -35,8 +37,8 @@
 			int prevMinuteDisplay = -1;
 			int prevDayDisplay = -1;
 
-			TftBarChart<int8_t> pressureBar1;
-			TftBarChart<int8_t> pressureBar2;
+			TftBarChart<int8_t> pressureChart1;
+			TftBarChart<int8_t> pressureChart2;
 
 			void displayClock();
 			void displayDate();
@@ -66,8 +68,11 @@
 			void displaySensorData(const int8_t sensorID);
 			void displaySensorDump();
 			void displayDateTime();
-    };    
+			void displayPressureH(DataHistory<uint16_t,24> &history, uint16_t currentPressure);
+			void displayPressureD(DataHistory<uint16_t,14> &history, uint16_t currentPressure);
+};    
 
 extern WsnSensorDataCache sensorDataCache;
 extern WsnSystemStatus sysStatus;
+extern DataHistory<uint16_t,24> pressureHistoryHourly;
 #endif

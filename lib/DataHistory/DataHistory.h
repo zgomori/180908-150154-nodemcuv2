@@ -8,9 +8,18 @@ class DataHistory{
 		T elementArray[SIZE] = {T()};
 		uint16_t nextIdx = 0;
 		uint16_t firstEmptyIdx = 0;  // used for min, max computing only
-
+		uint8_t mode = DataHistory::FIFO;
 	public:
+		enum mode_enum_t{
+			FIFO = 0,
+			LIFO = 1
+		};
+
 		DataHistory(){}
+
+		void setMode(mode_enum_t pMode){
+			mode = pMode;
+		}
 
 		// returns true when last element added and nextIdx reset to 0 
 		bool add(T newElemet){
@@ -35,7 +44,7 @@ class DataHistory{
 			if(arrIndex > SIZE-1){
 				arrIndex = arrIndex - SIZE; 	
 			}
-			return elementArray[arrIndex];
+			return mode == DataHistory::FIFO ? elementArray[arrIndex] : elementArray[(SIZE-1) - arrIndex];
 		}
 
 		inline T getOldest(){

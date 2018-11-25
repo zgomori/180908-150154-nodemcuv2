@@ -80,31 +80,6 @@ uint8_t hourHistorySaved = -1;
 uint8_t dayHistorySaved = -1;
 
 
-/******************************************************/
-DataHistory<float,10> tempH1;
-DataHistory<float,6> tempH2;
-
-/*
-			TftBarChart<uint8_t> pressureBar1(&tft, (barChartConfig_t<uint8_t>){
-				.origoX = 205,
-				.origoY = 250,
-				.scaleLineOffset = -2,
-				.scaleLineWidth = 2,
-				.pixelPerUnit = 4,
-				.barWidth = 5,
-				.barPadding = 4,
-				.numberOfBars = 1,
-				.scaleUnit = 1,
-				.minValue = -5,
-				.maxValue = 5,
-				.bgColor = 0x18C3,
-				.scaleColor = 0x7BEF,
-				.barColor = 0x07E0
-			});
-*/
-
-/*****************************************************/
-
 time_t getNtpTime(){
 	time_t ret = 0;
 	if (checkWifiConnection(cfg)){
@@ -147,6 +122,16 @@ void setup() {
 	wsnTimer.init(cfg);
 	wsnTimer.setTriggerFunction(timerTrigger);
 
+
+
+/**************Test************************/
+/*
+for (int i=0; i < 12; i++){
+	pressureHistoryHourly.add(1024-i);
+	pressureHistoryHourly.add(1024-i);
+	pressureHistoryDaily.add(1024-i);
+}
+*/
 }
 
 void loop() {
@@ -394,7 +379,7 @@ bool readLocalBME280(){
 	delay(10);
 
 	float temp = bme.readTemperature();
-	float pressure = (bme.readPressure() / 100.0F) + (1.2 * (cfg.elevation/10));
+	float pressure = round((bme.readPressure() / 100.0F) + (1.2 * (cfg.elevation/10)));
 	float humidity = bme.readHumidity();
 
 	if ((temp == 0.0) && (pressure = 0.0) && (humidity = 0.0)){
@@ -410,27 +395,24 @@ bool readLocalBME280(){
 
 	sensorDataCache.add(_sensorNodeMessage);
 
-
-	// History
-/*
+Serial.print("**Sensor pressure: ");
+Serial.println(pressure);
+	/* PRESSURE HISTORY*/
 	if (hourHistorySaved != hour()){
 		hourHistorySaved = hour();
 		pressureHistoryHourly.add((uint16_t)pressure);
 		temperatureHistoryHourly.add(temp);
-
-		Serial.println("******HISTORY**********");
-		for(int i=0; i< temperatureHistoryHourly.size();i++){
-			Serial.println(temperatureHistoryHourly[i]);
-		}
+		//wsnGUI.displayPressureH(pressureHistoryHourly);
 	}
 	
 	if (dayHistorySaved != day()){
 		dayHistorySaved = day();
 		pressureHistoryDaily.add((uint16_t)pressure);
+		wsnGUI.displayPressureD(pressureHistoryDaily, pressure);
 	}
-*/
 
-	bool x;
+
+/*	
 	x = tempH1.add(temp);
 	if (x){
 		float avg = tempH1.getAvg();
@@ -450,7 +432,7 @@ bool readLocalBME280(){
 	}	
 	Serial.print("oldest: ");
 	Serial.println(tempH2.getOldest());	
-
+*/
 	return true;
 }      
 

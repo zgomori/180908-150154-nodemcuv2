@@ -8,35 +8,35 @@ WsnGui::WsnGui(TFT_eSPI *_tft){
 	tftUtil.generateColorPalette16(COLOR_ICON_NORMAL, COLOR_BG_STATUSBAR, cpIconNormal);
 	tftUtil.generateColorPalette16(COLOR_ICON_ERROR, COLOR_BG_STATUSBAR, cpIconError);
 
-	pressureBar1.init(_tft, (barChartConfig_t<int8_t>){
-		.origoX = 218,
-		.origoY = 255,
+	pressureChart1.init(_tft, (barChartConfig_t<int8_t>){
+		.origoX = 221,
+		.origoY = 250,
 		.scaleLineOffset = -2,
 		.scaleLineWidth = 2,
-		.pixelPerUnit = 4,
+		.pixelPerUnit = 3,
 		.barWidth = 4,
-		.barPadding = 2,
+		.barPadding = 1,
 		.numberOfBars = 3,
 		.scaleUnit = 1,
-		.minValue = -5,
-		.maxValue = 5,
+		.minValue = -6,
+		.maxValue = 6,
 		.bgColor = 0x18C3,
 		.scaleColor = 0x7BEF,
 		.barColor = 0x07E0
 	});
 
-	pressureBar2.init(_tft, (barChartConfig_t<int8_t>){
-		.origoX = 150,
-		.origoY = 318,
+	pressureChart2.init(_tft, (barChartConfig_t<int8_t>){
+		.origoX = 151,
+		.origoY = 296,
 		.scaleLineOffset = -2,
 		.scaleLineWidth = 2,
-		.pixelPerUnit = 4,
+		.pixelPerUnit = 3,
 		.barWidth = 5,
 		.barPadding = 3,
 		.numberOfBars = 7,
 		.scaleUnit = 2,
-		.minValue = 0,
-		.maxValue = 20,
+		.minValue = -14,
+		.maxValue = 14,
 		.bgColor = 0x18C3,
 		.scaleColor = 0x7BEF,
 		.barColor = 0x07E0
@@ -163,22 +163,39 @@ void WsnGui::initMainScreen(){
 	tft->fillRect(120,	222,	120,	98,	COLOR_BG_BLOCK1);
 	tft->setTextColor(TFT_DARKGREY, COLOR_BG_BLOCK1);
 	tft->drawString("atm.pressure", 124, 232, 2);
+}
 
-	pressureBar1.drawScale();
-	pressureBar2.drawScale();
-	//!!!test
-	pressureBar1.drawBar(0,4,false);
-	pressureBar1.drawBar(1,2,false);
-	pressureBar1.drawBar(2,-3,false);
+void WsnGui::displayPressureH(DataHistory<uint16_t,24> &history, uint16_t currentPressure){
+	pressureChart1.drawScale();
+	//history.setMode(history.LIFO);
+	if (history[23] != 0){
+		pressureChart1.drawBar(2, currentPressure - history[23], false);
+	}
+	if (history[17] != 0){
+		pressureChart1.drawBar(1, currentPressure - history[17], false);
+	}
+	if (history[11] != 0){
+		pressureChart1.drawBar(0, currentPressure - history[11], false);
+	}
+	//history.setMode(history.FIFO);
+}
 
-	pressureBar2.drawBar(0,16,false);
-	pressureBar2.drawBar(1,18,false);
-	pressureBar2.drawBar(2,20,false);
-	pressureBar2.drawBar(3,10,false);
-	pressureBar2.drawBar(4,6,false);
-	pressureBar2.drawBar(5,12,false);
-	pressureBar2.drawBar(6,14,false);
+void WsnGui::displayPressureD(DataHistory<uint16_t,14> &history, uint16_t currentPressure){
+	pressureChart2.drawScale();
+	for(uint8_t i = 0; i < 7; i++){
+		if (history[i+7] != 0){	
+			pressureChart2.drawBar(i, currentPressure - history[i+7], false);
+		}	
+	}
 
+	tft->setTextPadding(28);
+	tft->setTextFont(0);
+
+	tft->setTextColor(TFT_GREEN, COLOR_BG_BLOCK1);
+	tft->setTextDatum(MR_DATUM);
+	char pressureCharBuffer[5];
+	dtostrf(currentPressure,0,0,pressureCharBuffer);
+	tft->drawString(pressureCharBuffer, 148, 297, 1);
 }
 
 void WsnGui::displaySensorData(const int8_t sensorID){
@@ -194,7 +211,11 @@ void WsnGui::displaySensorData(const int8_t sensorID){
 			tft->setTextPadding(72);
 
 //			tft->drawString(sensorDataCache.getPressure(0), 180, 257, 1);
-			tft->drawString(sensorDataCache.getPressure(0), 180, 251, 1);
+			tft->drawString(sensorDataCache.getPressure(0), 180, 252, 1);
+
+			/*display pressure chart hourly*/
+			displayPressureH(pressureHistoryHourly, atoi(sensorDataCache.getPressure(0)));
+			
 			break;
 
 		case 6 :
@@ -275,7 +296,8 @@ void WsnGui::displayClock(){
 	char tftClock[6];
 	sprintf(tftClock, "%u:%02u", hour(), minute());
  	tft->setTextColor(TFT_GREEN,TFT_BLACK);
-	tft->setTextDatum(MC_DATUM);  
+	tft->setTextDatum(MC_DATUM);
+	tft->setTextPadding(120);  
 	tft->drawString(tftClock, 120, 60, 7);
 }
 
@@ -287,6 +309,7 @@ void WsnGui::displayDate(){
 	tftDOW[4] = 0;
 
 	tft->setTextColor(TFT_DARKGREY,TFT_BLACK);
+	tft->setTextPadding(60); 
 	tft->setFreeFont(CF_ORB11);
 	tft->setTextDatum(ML_DATUM);
 	tft->drawString(tftDate, 4, 100, 1);
