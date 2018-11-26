@@ -75,4 +75,5 @@
 extern WsnSensorDataCache sensorDataCache;
 extern WsnSystemStatus sysStatus;
 extern DataHistory<uint16_t,24> pressureHistoryHourly;
+extern DataHistory<uint16_t,14> pressureHistoryDaily;
 #endif

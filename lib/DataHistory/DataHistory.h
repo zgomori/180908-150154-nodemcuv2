@@ -44,11 +44,11 @@ class DataHistory{
 			if(arrIndex > SIZE-1){
 				arrIndex = arrIndex - SIZE; 	
 			}
-			return mode == DataHistory::FIFO ? elementArray[arrIndex] : elementArray[(SIZE-1) - arrIndex];
+			return (mode == DataHistory::FIFO) ? elementArray[arrIndex] : elementArray[(SIZE-1) - arrIndex];
 		}
 
 		inline T getOldest(){
-			return (firstEmptyIdx < SIZE ? elementArray[0] : elementArray[nextIdx]);
+			return ((firstEmptyIdx < SIZE ? elementArray[0] : elementArray[nextIdx]));
 		}
 
 		uint16_t size(){

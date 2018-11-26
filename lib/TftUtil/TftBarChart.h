@@ -42,12 +42,22 @@ class TftBarChart{
 			this->cfg = config;
 		}
 
-
 		void drawScale(){
 			//clear
-			tft->fillRect(cfg.origoX + cfg.scaleLineOffset, cfg.origoY - ((cfg.maxValue / cfg.scaleUnit) * cfg.pixelPerUnit), ((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + (cfg.barPadding - 1), (((cfg.maxValue / cfg.scaleUnit) - (cfg.minValue / cfg.scaleUnit)) * cfg.pixelPerUnit) + 1, cfg.bgColor); 
+			tft->fillRect(	cfg.origoX + cfg.scaleLineOffset, 
+								cfg.origoY - ((cfg.maxValue / cfg.scaleUnit) * cfg.pixelPerUnit), 
+//								((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + (cfg.barPadding - 1),
+								abs(cfg.scaleLineOffset) + cfg.scaleLineWidth + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + cfg.barPadding,
+								(((cfg.maxValue / cfg.scaleUnit) - (cfg.minValue / cfg.scaleUnit)) * cfg.pixelPerUnit) + 1,
+								 cfg.bgColor
+							 ); 
 			// draw X line 
-			tft->drawFastHLine(cfg.origoX+1, cfg.origoY, ((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + (cfg.barPadding-1), cfg.scaleColor);
+			tft->drawFastHLine(	cfg.origoX, 
+										cfg.origoY, 
+//										((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + (cfg.barPadding-1), 
+										cfg.scaleLineWidth + cfg.barPadding + ((cfg.barPadding + cfg.barWidth) * cfg.numberOfBars) + cfg.barPadding, 
+										cfg.scaleColor
+									);
 			// draw Y line
 			tft->drawFastVLine(cfg.origoX, cfg.origoY - ((cfg.maxValue / cfg.scaleUnit) * cfg.pixelPerUnit), (((cfg.maxValue / cfg.scaleUnit) - (cfg.minValue / cfg.scaleUnit)) * cfg.pixelPerUnit) + 1, cfg.scaleColor);
 			// draw Y scaling

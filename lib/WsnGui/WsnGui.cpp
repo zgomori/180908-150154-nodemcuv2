@@ -59,6 +59,35 @@ void WsnGui::switchScreen(uint8_t screenId){
 			displaySensorData(1);
 			displaySensorData(6);
 
+
+
+/*test*/
+/*
+			for(int i=0; i <12; i++){
+				pressureHistoryHourly.add(1024-i);
+				pressureHistoryHourly.add(1024-i);
+
+			}
+
+			displayPressureH(pressureHistoryHourly, atoi(sensorDataCache.getPressure(0)));
+
+			delay(2000);
+			for(int i=0; i <12; i++){
+				pressureHistoryHourly.add(990+i);
+				pressureHistoryHourly.add(990+i);			
+			}
+
+			displayPressureH(pressureHistoryHourly, atoi(sensorDataCache.getPressure(0)));
+
+			for(int i=0; i <14; i++){
+				pressureHistoryDaily.add(1014-i*2);
+				Serial.println(pressureHistoryDaily[13]);
+			}
+*/
+/*******************************************/
+			displayPressureD(pressureHistoryDaily, atoi(sensorDataCache.getPressure(0)));
+
+
 			break;
 
 		case SCR_MENU:
@@ -297,7 +326,7 @@ void WsnGui::displayClock(){
 	sprintf(tftClock, "%u:%02u", hour(), minute());
  	tft->setTextColor(TFT_GREEN,TFT_BLACK);
 	tft->setTextDatum(MC_DATUM);
-	tft->setTextPadding(120);  
+	tft->setTextPadding(140);  
 	tft->drawString(tftClock, 120, 60, 7);
 }
 
