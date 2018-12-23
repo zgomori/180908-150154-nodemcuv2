@@ -6,11 +6,13 @@
 	class ThingSpeakUtil{
 		private:
 			WiFiClient *client; 
-			char* thingSpeakAddress;
+			const char* thingSpeakAddress;
 		public:
+			ThingSpeakUtil();
 			ThingSpeakUtil(WiFiClient *wifiClient, char* thingSpeakAddress);
+			void init(WiFiClient *wifiClient, const char* thingSpeakAddress);
 			bool update(char* apiKey, char* params);
-			bool get(char* apiKey, char* channel, char* json);
+			bool get(const char* apiKey, const char* channel, char* json);
 	};
 
 #endif // WS_DISPLAY_H

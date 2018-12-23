@@ -247,6 +247,7 @@ void timerTrigger(int8_t nodeID, int8_t tsNodeConfigIdx){
 			char* readApiKey = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakReadKey;
 			char* channel = cfg.tsNodeConfigArr[tsNodeConfigIdx].thingSpeakChannel;
 			bool tsGetStatus = tsUtil.get(readApiKey, channel, jsonResponse); 
+			
 			if(tsGetStatus){
 				sensorDataCache.add(nodeID, cfg.tsNodeConfigArr[tsNodeConfigIdx].fieldMapping, jsonResponse);
 				sysStatus.set(sysStatus.TS_GET, true);

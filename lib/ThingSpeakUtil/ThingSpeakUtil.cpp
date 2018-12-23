@@ -1,6 +1,14 @@
 #include "ThingSpeakUtil.h"
 
+ThingSpeakUtil::ThingSpeakUtil(){
+}
+
 ThingSpeakUtil::ThingSpeakUtil(WiFiClient *wifiClient, char* thingSpeakAddress){
+	client = wifiClient;
+	this->thingSpeakAddress = thingSpeakAddress;
+}
+
+void ThingSpeakUtil::init(WiFiClient *wifiClient, const char* thingSpeakAddress){
 	client = wifiClient;
 	this->thingSpeakAddress = thingSpeakAddress;
 }
@@ -52,7 +60,7 @@ bool ThingSpeakUtil::update(char* apiKey, char* params){
 	//Serial.println("===CLIENT STOP===");
 }
 
-bool ThingSpeakUtil::get(char* apiKey, char* channel, char* json){
+bool ThingSpeakUtil::get(const char* apiKey, const char* channel, char* json){
 	char getParam[80] =  "GET /channels/";
 	strcat(getParam, channel);
 	strcat(getParam, "/feeds/last.json?api_key=");
