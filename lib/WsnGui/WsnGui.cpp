@@ -213,7 +213,7 @@ void WsnGui::displayPressureD(DataHistory<uint16_t,14> &history, uint16_t curren
 	pressureChart2.drawScale();
 	for(uint8_t i = 0; i < 7; i++){
 		if (history[i+7] != 0){	
-			pressureChart2.drawBar(i, currentPressure - history[i+7], false);
+			pressureChart2.drawBar(i, history[i+7] - currentPressure, false);
 		}	
 	}
 
